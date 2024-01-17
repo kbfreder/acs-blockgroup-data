@@ -12,11 +12,11 @@ import pickle
 
 
 from base import Geos 
-from lat_lon import get_lat_lon_data
+from fetch_lat_lon_data import get_lat_lon_data
 from population import get_population_data 
 from households import get_all_household_data # checked
 from age import get_all_age_data
-from misc_pop import get_all_misc_data
+from misc_pop import get_all_misc_pop_data
 
 from util import (
     load_summary_df,
@@ -61,7 +61,7 @@ class ACSSummaryData:
             ('base', DatasetInfo('base', None, self.generate_base_data)),
             ('lat_lon', DatasetInfo('lat_lon', 'base', get_lat_lon_data)),
             ('population', DatasetInfo('population', ['lat_lon'], get_population_data)),
-            ('misc_pop', DatasetInfo('misc_pop', ['population'], get_all_misc_data)),
+            ('misc_pop', DatasetInfo('misc_pop', ['population'], get_all_misc_pop_data)),
             ('households', DatasetInfo('households', None, get_all_household_data))
             ('age', DatasetInfo('age', None, get_all_age_data)),
         ])

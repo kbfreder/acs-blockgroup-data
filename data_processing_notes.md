@@ -26,3 +26,9 @@ e.g. -666666666 represents "Estimate not computed due to insufficient number of 
 
 Jam Values observed in
 - median income (table B19013)
+
+# Universes
+
+"The count of occupied housing units is the same as the count of households."
+https://www.census.gov/housing/hvs/definitions.pdf
+
