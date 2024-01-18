@@ -1,4 +1,3 @@
-import re
 import pickle
 
 import numpy as np

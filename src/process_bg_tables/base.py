@@ -25,8 +25,19 @@ def generate_bg_fips_data():
     block_geo_df['county_fips'] = (block_geo_df['STATE'] 
                                    + block_geo_df['COUNTY']
     )
+    
+    # add county name
+    cnty_cols = ['STATE', 'COUNTY', 'NAME']
+    county_geo_df = geo_df[geo_df['SUMLEVEL'] == '050'][cnty_cols]
+    county_geo_df['county_fips'] = (county_geo_df['STATE'] 
+                                + county_geo_df['COUNTY']
+    )
 
-    return block_geo_df
+    bg_cnty_df = block_geo_df.merge(
+        county_geo_df[['county_fips', 'NAME']],
+        on='county_fips', how='left')
+
+    return bg_cnty_df.rename(columns={'NAME': 'county_name'})
     
 
 def generate_state_fips_data(save_file=False):

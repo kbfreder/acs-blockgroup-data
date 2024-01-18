@@ -6,13 +6,10 @@ import pandas as pd
 from functools import reduce
 import numpy as np
 
-
-
-from process_bg_tables.base import generate_bg_fips_data, generate_state_fips_data
-# from fetch_lat_lon_data import get_lat_lon_data
-from process_bg_tables.population import get_total_pop, get_non_instit_pop #get_population_data 
-from process_bg_tables.households import get_all_household_data # checked
-from process_bg_tables.age import generate_age_prop_data, get_median_age #get_all_age_data
+from process_bg_tables.base import generate_bg_fips_data
+from process_bg_tables.population import get_total_pop, get_non_instit_pop
+from process_bg_tables.households import get_all_household_data
+from process_bg_tables.age import generate_age_prop_data, get_median_age
 from process_bg_tables.race import get_race_pops, get_hispanic_pop
 from process_bg_tables.misc_independent import (
     get_median_income, get_grp_qrtrs, get_military_employed
@@ -38,6 +35,7 @@ def parse_args():
         type=int,
         default=0,
         required=False,
+        choices=range(1,5)
     )
     args = parser.parse_args()
     return args
@@ -72,27 +70,12 @@ def process_acs_bg_tables():
     df_list.append(get_grp_qrtrs())
     df_list.append(get_military_employed())
 
-
     # misc/other - potentially dependent on other variables
     ## for some, we can derive a percent or proprotion either from 
     ## the total population, or from total for the "Universe" of the table
     df_list.append(get_all_misc_pop_data(pop_df=pop_df))
 
-    # --------------------
-    # MERGE ACS TABLE DATA TOGETHER
-    # --------------------
-    # print("Checking ACS BG data")
-    # bad_cnt = 0
-    # for df in df_list:
-    #     if BG_TABLE_KEY_COL not in df.columns:
-    #         bad_cnt += 1
-    #         print(df.head())
-    #         print("")
-    
-    # if bad_cnt > 0:
-    #     sys.exit(1)
-
-    print("Merging ACS BG data")
+    print("Merging ACS Blockgroup data")
     acs_df = reduce(
         lambda df1, df2: df1.merge(df2, on=BG_TABLE_KEY_COL, how="outer"), 
         df_list)
@@ -109,45 +92,55 @@ if __name__ == "__main__":
     args = parse_args()
     step = args.from_step
     
-    # PROCESS "RAW" ACS TABLE DATA
     # --------------------
+    # 1. PROCESS ACS BG TABLE DATA
+
+        ## ACS Summary File tables must be downloaded first, using the
+        ## `fetch_acs_summary_files.py` script.
+    # --------------------
+    
     if step < 1:
         acs_df = process_acs_bg_tables()
-    else:
+    elif step == 1:
         print("Loading step 1 data")
         acs_df = load_summary_df("acs_data_step_1")
     
-
-    # LOAD / GENERATE OTHER "BASE" data
+    
+    # --------------------
+    # 2. FIPS and LAT/LON 
+        ## See `base.py` for how FIPS data are derived.
+        ## Lat/Lon data is downloaded/compiled by a separate script (`fetch_lat_lon_data.py`)
+        ## Here, we just load the output.
     # --------------------
     if step < 2:
+        # "FIPS" data (derive bg, census tract, county FIPS)
         print("Generating FIPS data")
         bg_geo_df = generate_bg_fips_data()
 
         # lat/lon
-        ## For now, require this be run separately, as it involves state-by-state downloads 
-        ## and can thus take a while. Here, we just load the output of `fetch_lat_lon_data.py`
         print("Fetching lat/lon data")
         lat_lon_df = load_summary_df(LAT_LON_FILENAME)
 
-        # MERGE AGAIN
-        # -----------------
+        # merge again
         print("Merging & saving")
-        acs_ext_df = bg_geo_df.merge(acs_df, on='bg_fips')
-        acs_ext_df = acs_ext_df.merge(lat_lon_df, on='bg_fips')
+        tmp_df1 = bg_geo_df.merge(acs_df, on='bg_fips')
+        step_2_df = tmp_df1.merge(lat_lon_df, on='bg_fips')
 
-        # save_summary_df(acs_ext_df, ACS_BG_FILENAME)
-        save_summary_df(acs_ext_df, "acs_data_step_2")
-    else:
+        print("Saving step 2 data")
+        save_summary_df(step_2_df, "acs_data_step_2")
+    elif step == 2:
         print("Loading step 2 data")
-        acs_ext_df = load_summary_df("acs_data_step_2")
+        step_2_df = load_summary_df("acs_data_step_2")
+
 
     # --------------------
-    # LOAD & MERGE CENSUS PLANNING DATABASE (CPDB)
-    ## Download from here: https://www2.census.gov/adrm/PDB/2022/pdb2022bg.csv
-    ## Or Google for latest/updated location
+    # 3. CENSUS PLANNING DATABASE (CPDB)
+        
+        ## Download from here: https://www2.census.gov/adrm/PDB/2022/pdb2022bg.csv
+        ## Or Google for latest/updated location
     # --------------------
 
+    # these must be defined outside of if/else 
     area_col = 'LAND_AREA' # alt: 'area_sqmile'
     median_age_col = 'median_age' # from ACS data / alt: 'Median_Age_ACS_16_20' from CPDB
     
@@ -156,39 +149,32 @@ if __name__ == "__main__":
 
     if step < 3:
         print("Loading & Processing Census Planning Database data")
-        pdb_df = pd.read_csv("../data/pdb2022bg.csv", sep=",", dtype='object')
-        # convert data types
         pdb_dtype_dict = {
             'GIDBG': 'object',
             'LAND_AREA': 'float',
             'AIAN_LAND': 'int',
             'Tot_Population_CEN_2020': 'int',
-            # 'Median_Age_ACS_16_20': 'float',
-            'Tot_GQ_CEN_2020': 'int', # keep for now, to cross-check with tract-level ACS data
+            'Median_Age_ACS_16_20': 'float',
+            'Tot_GQ_CEN_2020': 'int', # pull in for now, to cross-check with tract-level ACS data
             'Inst_GQ_CEN_2020': 'int',
             'Non_Inst_GQ_CEN_2020': 'int',
-            # 'pct_Tot_GQ_CEN_2020': 'float',
-            # 'pct_Inst_GQ_CEN_2020': 'float',
-            # 'pct_Non_Inst_GQ_CEN_2020': 'float'
         }
         pdb_cols = pdb_dtype_dict.keys()
-        pdb_df = pdb_df.astype(pdb_dtype_dict)
-        
+        pdb_df = pd.read_csv("../data/pdb2022bg.csv", sep=",", dtype=pdb_dtype_dict)
+
         # note: we use an inner join -- this ignores the CT mis-match for now
         # TODO: figure out CT geo's
-        bg_df = acs_ext_df.merge(pdb_df[pdb_cols], 
-                                 how='inner',
-                                 left_on='bg_fips', right_on='GIDBG')
-        # --------------------
-        # DERIVE OTHER ATTRIBUTES
-        # --------------------
+        bg_df = step_2_df.merge(pdb_df[pdb_cols], how='inner', 
+                                left_on='bg_fips', right_on='GIDBG')
+
+        
+        # DERIVE ATTRIBUTES FROM CPDB et al
+
         print("Deriving other attributes")
     
         bg_df['pop_density_sqmile'] = bg_df['population'] / bg_df[area_col]
         # area from TigerWeb can be NaN, so fillna
         bg_df['pop_density_sqmile'] = bg_df['pop_density_sqmile'].fillna(0)
-            ## alt: we could be selective about how/why Na's get filled:
-            # np.where(acs_df['population'] == 0, 0, acs_df['pop_density_sqmile'])
 
         bg_df['median_age'] = bg_df[median_age_col]
 
@@ -198,39 +184,93 @@ if __name__ == "__main__":
             bg_df['non_institutionized_pop'] = round(
                 bg_df['population'] * (1-bg_df['pct_inst_groupquarters_2020']), 0)
 
-        bg_df = bg_df.rename(columns={
+        step_3_df = bg_df.rename(columns={
             'AIAN_LAND': 'amindian_aknative_hawaiiannative_land_flag'
         })
         print("Saving step 3 data")
-        save_summary_df(bg_df, "acs_data_step_3")
-    else:
+        save_summary_df(step_3_df, "acs_data_step_3")
+    elif step == 3:
         print("Loading step 3 data")
-        bg_df = load_summary_df("acs_data_step_3")
+        step_3_df = load_summary_df("acs_data_step_3")
 
+    step_3_drop_cols = [
+        'GIDBG', 'Inst_GQ_CEN_2020', 'Non_Inst_GQ_CEN_2020', 
+        'Tot_Population_CEN_2020', 'Tot_GQ_CEN_2020', 
+        # 'Median_Age_ACS_16_20'
+    ]
 
-    # compute tract things
-    print("Deriving Tract-level data")
-    bg_df['tract_pop'] = bg_df.groupby("census_tract_fips")['population'].transform("sum")
-    bg_df['tract_pop_density_sqmile'] = bg_df['tract_pop'] / bg_df[area_col]
+    # --------------------
+    # 4. TRACT-LEVEL ATTRIBUTES
 
-    ## TODO: compare this to tract-level data
-    bg_df['tract_grp_quarters'] = bg_df.groupby("census_tract_fips")['grp_quarters_pop'].transform("sum")
-    bg_df['pct_tract_groupqtrs'] = bg_df['tract_grp_quarters'] / bg_df['tract_pop']
+        ## These derived from rollups from blockgroup-level data.
+        ## (Previously/alternatively, we could download tract-level data.)
+    # --------------------
+    if step < 4:
+        bg_tract_df = step_3_df.drop(columns=step_3_drop_cols)
 
-    bg_df['tract_military_employed'] = bg_df.groupby('census_tract_fips')['military_employed'].transform('sum')
-    bg_df['pct_tract_military_employed'] = bg_df['tract_military_employed'] / bg_df['tract_pop']
+        print("Deriving Tract-level data")
+        bg_tract_df['tract_pop'] = bg_tract_df.groupby("census_tract_fips")['population'].transform("sum")
+        bg_tract_df['tract_pop_density_sqmile'] = bg_tract_df['tract_pop'] / bg_tract_df[area_col]
 
-    bg_df['military_base_flag'] = np.where(
-        (bg_df['pct_tract_military_employed'] > 0.1) & (bg_df['pct_non_inst_groupquarters_2020'] > 0.1),
-        1, 0)
+        bg_tract_df['tract_grp_quarters'] = bg_tract_df.groupby("census_tract_fips")['grp_quarters_pop'].transform("sum")
+        bg_tract_df['pct_tract_groupqtrs'] = bg_tract_df['tract_grp_quarters'] / bg_tract_df['tract_pop']
 
-    # drop cols we no longer need
-    drop_cols = ['area_sqmile',
-                 'tract_pop', 'grp_quarters_pop', 'tract_grp_quarters',
-                 'military_employed', 'tract_military_employed',
-                 'GIDBG',
-                 'LAND_AREA', 'Inst_GQ_CEN_2020', 'Non_Inst_GQ_CEN_2020', 'Tot_Population_CEN_2020', 
-                 'Tot_GQ_CEN_2020', 
-                 ]
-    print("Saving final data")
-    save_summary_df(bg_df.drop(columns=drop_cols), ACS_BG_FILENAME)
+        bg_tract_df['tract_military_employed'] = bg_tract_df.groupby('census_tract_fips')['military_employed'].transform('sum')
+        bg_tract_df['pct_tract_military_employed'] = bg_tract_df['tract_military_employed'] / bg_tract_df['tract_pop']
+
+        # TODO: decide whether to use this logic, or do a spatial join
+        bg_tract_df['military_base_flag'] = np.where(
+            (bg_tract_df['pct_tract_military_employed'] > 0.1) 
+            & (bg_tract_df['pct_non_inst_groupquarters_2020'] > 0.1),
+            1, 0)
+        
+        step_4_df = bg_tract_df.copy()
+        print("Saving step 4 data")
+        save_summary_df(step_4_df, "acs_data_step_4")
+    elif step < 4:
+        print("Loading step 4 data")
+        step_4_df = load_summary_df("acs_data_step_4")
+    
+    step_4_drop_cols = ['area_sqmile','LAND_AREA',
+                        'tract_pop', 'grp_quarters_pop', 'tract_grp_quarters',
+                        'military_employed', 'tract_military_employed',
+                        ]
+
+    # --------------------
+    # 5. ZIP CODE & MSA
+
+        ## cross-walk between tract & zip code is available from HUD: 
+        ## https://www.huduser.gov/portal/datasets/usps_crosswalk.html
+
+        ## cross-walk between county & MSA (Metropolitan Statistical Areas) from BLS:
+        ## https://www.bls.gov/cew/classifications/areas/county-msa-csa-crosswalk.htm
+        
+    # --------------------
+    if step < 5:
+        print("Merging ZIP & MSA data")
+        step_4_df = step_4_df.drop(columns=step_4_drop_cols)
+        TRACT_ZIP_PATH = "../data/TRACT_ZIP_092023.xlsx"
+        tract_zip_df = pd.read_excel(TRACT_ZIP_PATH, 
+                                     dtype={'TRACT': 'object', 'ZIP': 'object'})
+        # assign zip with largest pop % to tract
+        max_ratio_idxs = tract_zip_df.groupby('TRACT')['RES_RATIO'].idxmax()
+        tract_zip_dedup = tract_zip_df.loc[max_ratio_idxs]
+
+        tmp_df1 = step_4_df.merge(
+            tract_zip_dedup[['TRACT', 'ZIP']].rename(
+                columns={'TRACT': 'census_tract_fips', 'ZIP': 'zip'}), 
+                on='census_tract_fips', how='left')
+
+        MSA_PATH = "../data/county-msa-csa-crosswalk.xlsx"
+        msa_df = pd.read_excel(MSA_PATH, sheet_name='Feb. 2013 Crosswalk',
+                               dtype={'County Code': 'object'})
+        msa_df['County Code'] = msa_df['County Code'].apply(lambda x: str(x).zfill(5))
+        tmp_df2 = tmp_df1.merge(msa_df[['County Code', 'MSA Code', 'MSA Title']], 
+                                left_on='county_fips', right_on='County Code', how='left')
+
+        step_5_df = (tmp_df2.drop(columns=['County Code'])
+                     .rename(columns={'MSA Code': 'msa', 'MSA Title': 'msa_name'})
+        )
+
+        print("Saving Final (step 5) data")
+        save_summary_df(step_5_df, ACS_BG_FILENAME)

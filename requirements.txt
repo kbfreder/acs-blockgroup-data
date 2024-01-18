@@ -1,0 +1,6 @@
+
+pandas
+numpy
+lxml
+tqdm # todo: remove this dependency
+# geopandas # needed for spatial joins -- TBD if we use them
