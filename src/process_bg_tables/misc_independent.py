@@ -1,13 +1,10 @@
 
 from functools import reduce
 
-from util import (
-    # merge_bg_table_with_summary_df,
+from .util import (
     process_some_cols_bg_table,
-    # process_single_col_bg_table
     )
-from configs import (
-    DENOM_TO_USE,
+from .configs import (
     BG_TABLE_KEY_COL
     )
 

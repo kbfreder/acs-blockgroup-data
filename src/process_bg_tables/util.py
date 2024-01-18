@@ -4,23 +4,20 @@ import pickle
 import numpy as np
 import pandas as pd
 
-from configs import BG_TABLE_KEY_COL
+from .configs import BG_TABLE_KEY_COL, YEAR, DATASET_YRS, BG_DATA_PATH
 
 pd.set_option('mode.chained_assignment', None)
 
 
-def get_column_names_df(tbl_id, shell_df):
+def get_column_names_df(tbl_id):
+    shell_ftp_dir = "https://www2.census.gov/programs-surveys/acs/summary_file/2022/table-based-SF/documentation/ACS20225YR_Table_Shells.txt"
+    shell_df = pd.read_csv(shell_ftp_dir, sep="|", )
     return shell_df[shell_df['Table ID'] == tbl_id.upper()]
 
 
-# LOAD LOCAL DATA TABLES
-
-BG_DATA_PATH = "../../data/sumlevel=150/"
-YEAR = 2022
-DATASET = 5
 
 def load_table(table_id):
-    file_path = f"{BG_DATA_PATH}acsdt{DATASET}y{YEAR}-{table_id.lower()}.dat"
+    file_path = f"{BG_DATA_PATH}acsdt{DATASET_YRS}y{YEAR}-{table_id.lower()}.dat"
     try:
         df = pd.read_csv(file_path, sep="|", dtype="str")
     except FileNotFoundError:
@@ -48,42 +45,6 @@ def save_summary_df(summary_df, save_name):
 # MERGE LOCAL & SUMMARY TABLES
         
 JAM_VALS = [-666666666, -888888888, -999999999]
-
-
-# def process_single_col_bg_table(tbl_id, col_idx, new_col_name, dtype):
-#     """
-#     Merges blockgroup table with summary data whilst:
-#     - converting object/str datatypes to numeric
-#     - checking for "Jam" values and converting to NaN
-    
-#     **Only works up to indentation level == 2**
-
-#     params
-#     --------
-#     tbl_id: str
-#         Table ID to process. Ex: 'B01001'
-#     col_idx: int
-#         Integer representing "line number" of column to process. 
-#         Note these should not be the index of the column in the bg table, 
-#         but rather the "Line" of the column from the table shell lookup. 
-#         Also corresponds to X in blockgroup table column name: '[TBL_ID]_E00X'.
-#     new_col_name: str
-#         Name to assign to column. 
-#     dtype: str
-#         Datatypes for the new column. Should be in format acceptable by 
-#        `df.astype()`, e.g. numpy.dtypes (`int`, `int32`, `int64`, `float`
-#        etc.)
-
-#     """
-#     # make backwards compatible
-#     if dtype == 'integer':
-#         dtype = 'int'
-
-#     bg_table_df = load_table(tbl_id) 
-#     old_col_name = f"{tbl_id}_E{col_idx:03}"
-#     bg_table_df[new_col_name] = bg_table_df[old_col_name].astype(dtype)
-#     bg_table_df.replace(JAM_VALS, np.nan, inplace=True)
-#     return bg_table_df
 
 
 def process_some_cols_bg_table(tbl_id, col_idxs, new_col_names, dtype):
@@ -122,10 +83,10 @@ def process_some_cols_bg_table(tbl_id, col_idxs, new_col_names, dtype):
     return bg_table_df[[BG_TABLE_KEY_COL] + new_col_names]
 
 
-def process_all_cols_bg_table(tbl_id, dtype):
+def process_all_cols_bg_table(tbl_id, col_names_df, dtype):
     """Process all columns of blockgroup table.
 
-    "Process" = load table, rename column, convert datatype, convert "Jam" 
+    "Process" ::: load table, rename column, convert datatype, convert "Jam" 
     values to NaN.
     
     params
@@ -141,8 +102,8 @@ def process_all_cols_bg_table(tbl_id, dtype):
     ---------
     pd.DataFrame
     """
-    bg_table_df = load_table(tbl_id) #bg_table_df.copy()
-    col_names_df = get_column_names_df(tbl_id)
+    bg_table_df = load_table(tbl_id)
+    # col_names_df = get_column_names_df(tbl_id)
 
     new_col_names = []
     for i, row in col_names_df.iterrows():

@@ -1,11 +1,11 @@
 
 import numpy as np
 
-from util import (get_column_names_df,
+from .util import (get_column_names_df,
                   process_all_cols_bg_table,
                   process_some_cols_bg_table
                   )
-from configs import BG_TABLE_KEY_COL
+from .configs import BG_TABLE_KEY_COL
 
 
 
@@ -36,11 +36,11 @@ def generate_age_prop_data():
     Also creates `prop_female` column
     """
     tbl_id = 'B01001'
-    bg_df = process_all_cols_bg_table(tbl_id, 'int')
+    col_names_df = get_column_names_df(tbl_id)
+    bg_df = process_all_cols_bg_table(tbl_id, col_names_df, 'int')
     bg_df['prop_female'] = bg_df['Female total'] / bg_df['Total'] 
     cols_to_keep = [BG_TABLE_KEY_COL, 'prop_female']
     
-    col_names_df = get_column_names_df(tbl_id)
     age_range_str_list = col_names_df[col_names_df['Indent'] == 2]['Label'].unique()
     for age_str in age_range_str_list:
         bg_df[f"Total {age_str}"] = (bg_df[f"Male {age_str}"] +
