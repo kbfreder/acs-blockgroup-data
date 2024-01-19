@@ -15,7 +15,6 @@ def get_column_names_df(tbl_id):
     return shell_df[shell_df['Table ID'] == tbl_id.upper()]
 
 
-
 def load_table(table_id, rel_path=".."):
     file_path = f"{rel_path}/{BG_DATA_PATH}acsdt{DATASET_YRS}y{YEAR}-{table_id.lower()}.dat"
     try:
@@ -51,10 +50,8 @@ def save_summary_df(summary_df, save_name, rel_path=".."):
     save_csv_and_dtypes(summary_df, file_stub, rel_path)
 
 
-# MERGE LOCAL & SUMMARY TABLES
-        
+# PROCESSING ACS TABLES
 JAM_VALS = [-666666666, -888888888, -999999999]
-
 
 def process_some_cols_bg_table(tbl_id, col_idxs, new_col_names, dtype):
     """Process specified columns of blockgroup table.
@@ -112,7 +109,6 @@ def process_all_cols_bg_table(tbl_id, col_names_df, dtype):
     pd.DataFrame
     """
     bg_table_df = load_table(tbl_id)
-    # col_names_df = get_column_names_df(tbl_id)
 
     new_col_names = []
     for i, row in col_names_df.iterrows():

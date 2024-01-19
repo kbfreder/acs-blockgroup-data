@@ -103,9 +103,6 @@ def get_all_household_data():
         lambda df1, df2: df1.merge(df2, on=BG_TABLE_KEY_COL, how='outer'), 
         df_list)
     
-    # derived computations
-    # hh_df['avg_vehicles_per_hh'] = hh_df['agg_num_vehicles'] / hh_df['households']
-
     return hh_df
 
 

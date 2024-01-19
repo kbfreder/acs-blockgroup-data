@@ -7,10 +7,9 @@ Process data from the 2022 American Community Survey (ACS) from the Census, (mos
 
 Once all necessary data has been downloaded (see following section), it can be processed using `src/main.py`
 - If only a certain portion of the processing needs to be re-run, you can pass a `--from-step` argument.
-- Output is saved to `data/parsed_acs_data`
-    - Final data: `data/parsed_acs_data/ACS_BG_DATA_2022.csv`
-        - A helper dictionary containing the data types for the columns can be found in `data/parsed_acs_data/ACS_BG_DATA_2022.pkl`. (csv's don't do a great job of retaining datatypes, and some 0-padded strings tend to get interpreted as integers.)
-        - The helper function `src/process_bg_tables/util/load_summary_df` can be used to load the .csv with the correct datatypes.
+- Final Output is saved to `ACS_BG_DATA_2022.csv`
+    - A helper dictionary containing the data types for the columns is also created: `ACS_BG_DATA_2022.pkl`. (csv's don't do a great job of retaining datatypes, and some 0-padded strings tend to get interpreted as integers.)
+    - The helper function `src/process_bg_tables/util/load_csv_with_dtypes` can be used to load the .csv with the correct datatypes. (ex: `load_csv_with_dtypes('ACS_BG_DATA_2022')`)
 
 
 ## Downloading data

@@ -19,11 +19,12 @@ from process_bg_tables.fips_names import generate_bg_fips_data
 from process_bg_tables.util import (
     extract_bg_fips_from_geo_id,
     load_summary_df,
-    save_summary_df
+    save_summary_df,
+    save_csv_and_dtypes
 )
 from configs import (
     LAT_LON_FILENAME,
-    ACS_BG_FILENAME,
+    ACS_BG_FILENAME, FINAL_OUTPUT_DIR,
     BG_TABLE_KEY_COL,
     CPDB_PATH, 
     CT_CW_PATH,
@@ -262,7 +263,7 @@ if __name__ == "__main__":
         step_4_df = bg_tract_df.copy()
         print("Saving step 4 data")
         save_summary_df(step_4_df, "acs_data_step_4")
-    elif step < 4:
+    elif step == 4:
         print("Loading step 4 data")
         step_4_df = load_summary_df("acs_data_step_4")
     
@@ -282,9 +283,9 @@ if __name__ == "__main__":
         
     # --------------------
     if step < 5:
-        print("Merging ZIP & MSA data")
         step_4_df = step_4_df.drop(columns=step_4_drop_cols)
-        # TRACT_ZIP_PATH = "../data/TRACT_ZIP_092023.xlsx"
+        
+        print("Merging ZIP & MSA data")
         tract_zip_df = pd.read_excel(f"{REL_PATH}/{TRACT_ZIP_PATH}", 
                                      dtype={'TRACT': 'object', 'ZIP': 'object'})
         # assign zip with largest pop % to tract
@@ -299,13 +300,12 @@ if __name__ == "__main__":
         msa_df = pd.read_excel(f"{REL_PATH}/{MSA_PATH}", sheet_name=MSA_SHEET,
                                dtype={'County Code': 'object'})
         msa_df['county_fips'] = msa_df['County Code'].apply(lambda x: str(x).zfill(5))
+        
         tmp_df2 = tmp_df1.merge(msa_df[['county_fips', 'MSA Code', 'MSA Title']], 
                                 on='county_fips',  how='left')
 
-        step_5_df = tmp_df2.rename(columns={
-                         'MSA Code': 'msa_code', 
-                         'MSA Title': 'MSA'
-                         })
+        step_5_df = tmp_df2.rename(columns={'MSA Code': 'msa_code', 'MSA Title': 'MSA'})
 
         print("Saving Final (step 5) data")
-        save_summary_df(step_5_df, ACS_BG_FILENAME)
+        # save_summary_df(step_5_df, ACS_BG_FILENAME)
+        save_csv_and_dtypes(step_5_df, f"{FINAL_OUTPUT_DIR}/{ACS_BG_FILENAME}", REL_PATH)

@@ -2,11 +2,11 @@
 import pandas as pd
 
 from .util import save_summary_df, load_csv_with_dtypes
-from configs import STATE_TABLE_NAME, GEO_FILE_PATH
+from configs import STATE_TABLE_NAME, GEO_FILE_PATH_NO_EXT
 
 
 def generate_bg_fips_data():
-    geo_df = load_csv_with_dtypes(GEO_FILE_PATH)
+    geo_df = load_csv_with_dtypes(GEO_FILE_PATH_NO_EXT)
     bg_cols = ['STATE', 'COUNTY', 'TRACT', 'BLKGRP', ]
     block_geo_df = geo_df[geo_df['SUMLEVEL'] == '150'][bg_cols]
     block_geo_df['bg_fips'] = (block_geo_df['STATE'] 
@@ -53,7 +53,7 @@ def generate_bg_fips_data():
 
 def generate_state_fips_data(save_file=False, rel_path="../..", geo_df=None):
     if geo_df is None:
-        geo_df = load_csv_with_dtypes(GEO_FILE_PATH, rel_path)
+        geo_df = load_csv_with_dtypes(GEO_FILE_PATH_NO_EXT, rel_path)
     state_cols = ['STUSAB', 'STATE', 'NAME']
     # note: need filter on `COMPONENET`, otherwise get >600 entries
     state_geo_df = geo_df[(geo_df['SUMLEVEL'] == '040') 

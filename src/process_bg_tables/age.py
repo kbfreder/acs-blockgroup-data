@@ -26,7 +26,7 @@ def _generate_prop_age_column(df, age_range_str, age_ranges_to_add):
     
     df[age_range_str] = np.sum(df[cols_to_add], axis=1)
     df[prop_age_col] = df[age_range_str] / df['Total']
-    # cols_to_keep.append(prop_age_col)
+
     return df, prop_age_col
     
 
@@ -76,18 +76,3 @@ def get_median_age():
     )
     return bg_df[[BG_TABLE_KEY_COL, 'median_age']]
 
-
-# def get_all_age_data():
-#     df1 = generate_age_prop_data()
-#     df2 = get_median_age()
-    
-#     df = df1[cols_to_keep1 + ['GEO_ID']].merge(
-#         df2[cols_to_keep2 + ['GEO_ID']], 
-#         on='GEO_ID')
-#     cols_to_keep = cols_to_keep1 + cols_to_keep2
-
-#     return df, cols_to_keep
-
-
-# if __name__ == "__main__":
-#     process_all_age_data()

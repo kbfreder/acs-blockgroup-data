@@ -20,13 +20,11 @@ def table_for_sumlevel(tbl_id, year, dataset, sumlevel):
     # get .dat file based on tbl_id or all tables
     if tbl_id == '*':
         ftp = FTP("ftp2.census.gov")
-        # ftp.login("","")
         ftp.cwd(ftp_dir)
         files = [x for x in ftp.nlst() if f"{tbl_id}.dat" in x or (tbl_id=="*" and ".dat" in x)]
         num_files = len(files)
         print(f"Will check {num_files} files for sumlevel {sumlevel}")
     else:
-        # acsdt5y2022-b01001g.dat
         print(f"Attempting to download table {tbl_id}")
         files = [f"acsdt{dataset}y{year}-{tbl_id.lower()}.dat"]
 
@@ -50,12 +48,17 @@ def table_for_sumlevel(tbl_id, year, dataset, sumlevel):
     print(f"Found {c} files with sumlevel {sumlevel} data")
 
 
-# see: https://www.census.gov/programs-surveys/acs/geography-acs/geography-boundaries-by-year.html
-# for summary level codes
+
     
 
 if __name__ == "__main__":
-    # blockgroup tables:
+
+    # see: https://www.census.gov/programs-surveys/acs/geography-acs/geography-boundaries-by-year.html
+    # for summary level codes
+    
+    # ------------------
+    # blockgroup tables
+    # ------------------
 
     ## option 1: download them all (there were 410 in 2022; takes 30-40? min to download them all)
     ## useful if you don't know which tables you need
@@ -93,15 +96,20 @@ if __name__ == "__main__":
             sumlevel='150' # tract
         )
 
+    # ------------------
     # tract tables:
-    for tbl_id in [
-        # 'B26001', # Group Quarters Population -- don't need, gives same result as a bg-level table
-        'B08124', # Means of Transportation to Work by Occupation -- Mil Specific Occ's
-        'B08126', # Means of Transportation to Work by Industry	 -- Armed Forces
-    ]:
-        table_for_sumlevel(
-            tbl_id=tbl_id,
-            year=YEAR, 
-            dataset=DATASET_YRS, 
-            sumlevel='140' # tract
-        )
+    # ------------------
+    
+    # Turns out we don't need any!
+        
+    # for tbl_id in [
+    #     'B26001', # Group Quarters Population -- don't need, gives same result as a bg-level table
+    #     'B08124', # Means of Transportation to Work by Occupation -- Mil Specific Occ's
+    #     'B08126', # Means of Transportation to Work by Industry	 -- Armed Forces
+    # ]:
+    #     table_for_sumlevel(
+    #         tbl_id=tbl_id,
+    #         year=YEAR, 
+    #         dataset=DATASET_YRS, 
+    #         sumlevel='140' # tract
+    #     )

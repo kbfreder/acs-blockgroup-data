@@ -1,7 +1,6 @@
 import numpy as np
 
-from .util import (process_some_cols_bg_table,
-                  )
+from .util import process_some_cols_bg_table
 from configs import BG_TABLE_KEY_COL
 
 

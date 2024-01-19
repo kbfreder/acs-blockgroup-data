@@ -7,7 +7,6 @@ from tqdm import tqdm
 
 
 OUTDIR = "../../data/tigerweb/state_bg_shapefiles_2020/"
-# base url for tigerweb shapefiles for BG's
 BASE_URL = "https://www2.census.gov/geo/tiger/TIGER2022/BG/tl_2022_{}_bg.zip"
 
 
@@ -23,7 +22,6 @@ def extract_zip_file(zip_file, destination):
         zip_ref.extractall(destination)
     
 
-# get tables for a summary level and output file for each
 def fetch_and_extract(state_code):
     state_url = BASE_URL.format(state_code)
     state_path = f"{OUTDIR}{state_code}"
@@ -44,7 +42,6 @@ def fetch_and_extract(state_code):
 
 
     
-
 if __name__ == "__main__":
     # load state list
     state_lkup_df = pd.read_csv("../data/state_geo_lkup.csv", 
