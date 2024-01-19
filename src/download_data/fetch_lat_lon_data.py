@@ -2,8 +2,9 @@
 import os, sys
 import pandas as pd
 
-from src.process_bg_tables.configs import LAT_LON_FILENAME, STATE_TABLE_NAME
-from src.process_bg_tables.util import load_summary_df, save_summary_df
+sys.path.append("..")
+from process_bg_tables.util import load_summary_df, save_summary_df
+from configs import LAT_LON_FILENAME, STATE_TABLE_NAME
 
 
 BASE_TW_BG_URL = "https://tigerweb.geo.census.gov/tigerwebmain/Files/acs23/tigerweb_acs23_blkgrp_2022_acs22_{}.html"

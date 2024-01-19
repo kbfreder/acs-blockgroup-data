@@ -2,7 +2,7 @@ import numpy as np
 
 from .util import (process_some_cols_bg_table,
                   )
-from .configs import BG_TABLE_KEY_COL
+from configs import BG_TABLE_KEY_COL
 
 
 def _derive_pct_col_name(col):

@@ -1,13 +1,12 @@
 import os, sys
 import pandas as pd
-# from ftplib import FTP
 from urllib.request import urlretrieve
 from urllib.error import HTTPError
 import zipfile
 from tqdm import tqdm
 
 
-OUTDIR = "../data/tigerweb/state_bg_shapefiles_2020/"
+OUTDIR = "../../data/tigerweb/state_bg_shapefiles_2020/"
 # base url for tigerweb shapefiles for BG's
 BASE_URL = "https://www2.census.gov/geo/tiger/TIGER2022/BG/tl_2022_{}_bg.zip"
 

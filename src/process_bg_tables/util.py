@@ -3,9 +3,10 @@ import pickle
 import numpy as np
 import pandas as pd
 
-from .configs import BG_TABLE_KEY_COL, YEAR, DATASET_YRS, BG_DATA_PATH
 
-pd.set_option('mode.chained_assignment', None)
+from configs import (
+    ACS_DATA_DIR, YEAR, DATASET_YRS, BG_DATA_PATH, BG_TABLE_KEY_COL
+)
 
 
 def get_column_names_df(tbl_id):
@@ -15,8 +16,8 @@ def get_column_names_df(tbl_id):
 
 
 
-def load_table(table_id):
-    file_path = f"{BG_DATA_PATH}acsdt{DATASET_YRS}y{YEAR}-{table_id.lower()}.dat"
+def load_table(table_id, rel_path=".."):
+    file_path = f"{rel_path}/{BG_DATA_PATH}acsdt{DATASET_YRS}y{YEAR}-{table_id.lower()}.dat"
     try:
         df = pd.read_csv(file_path, sep="|", dtype="str")
     except FileNotFoundError:
@@ -25,20 +26,29 @@ def load_table(table_id):
     return df
 
 
-# LOAD/SAVE SUMMARY TABLE
-def load_summary_df(checkpoint_name):
-    file_stub = f"../data/parsed_acs_data/{checkpoint_name}"
-    with open(f"{file_stub}.pkl", "rb") as f:
+def load_csv_with_dtypes(path_without_ext, rel_path=".."):
+    with open(f"{rel_path}/{path_without_ext}.pkl", "rb") as f:
         dtype_dict = pickle.load(f)
-    summary_df = pd.read_csv(f"{file_stub}.csv", dtype=dtype_dict)
-    return summary_df
+    df = pd.read_csv(f"{rel_path}/{path_without_ext}.csv", dtype=dtype_dict)
+    return df
 
-def save_summary_df(summary_df, save_name):
-    file_stub = f"../data/parsed_acs_data/{save_name}"
-    dtype_dict = summary_df.dtypes.apply(lambda x: x.name).to_dict()
-    summary_df.to_csv(f"{file_stub}.csv", index=False)
-    with open(f"{file_stub}.pkl", "wb") as pf:
+
+def save_csv_and_dtypes(df, path_without_ext, rel_path=".."):
+    dtype_dict = df.dtypes.apply(lambda x: x.name).to_dict()
+    df.to_csv(f"{rel_path}/{path_without_ext}.csv", index=False)
+    with open(f"{rel_path}/{path_without_ext}.pkl", "wb") as pf:
         pickle.dump(dtype_dict, pf)
+
+
+# LOAD/SAVE SUMMARY TABLE
+def load_summary_df(checkpoint_name, rel_path=".."):
+    file_stub = f"{ACS_DATA_DIR}/{checkpoint_name}"
+    return load_csv_with_dtypes(file_stub, rel_path)
+
+
+def save_summary_df(summary_df, save_name, rel_path=".."):
+    file_stub = f"{ACS_DATA_DIR}/{save_name}"
+    save_csv_and_dtypes(summary_df, file_stub, rel_path)
 
 
 # MERGE LOCAL & SUMMARY TABLES

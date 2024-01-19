@@ -4,7 +4,7 @@ from functools import reduce
 from .util import (
     process_some_cols_bg_table,
     )
-from .configs import (
+from configs import (
     BG_TABLE_KEY_COL
     )
 

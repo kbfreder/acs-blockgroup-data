@@ -6,7 +6,6 @@ import pandas as pd
 from functools import reduce
 import numpy as np
 
-from process_bg_tables.base import generate_bg_fips_data
 from process_bg_tables.population import get_total_pop, get_non_instit_pop
 from process_bg_tables.households import get_all_household_data
 from process_bg_tables.age import generate_age_prop_data, get_median_age
@@ -15,17 +14,25 @@ from process_bg_tables.misc_independent import (
     get_median_income, get_grp_qrtrs, get_military_employed
 )
 from process_bg_tables.misc_pop import get_all_misc_pop_data
+from process_bg_tables.fips_names import generate_bg_fips_data
 
 from process_bg_tables.util import (
     extract_bg_fips_from_geo_id,
     load_summary_df,
     save_summary_df
 )
-from process_bg_tables.configs import (
+from configs import (
     LAT_LON_FILENAME,
     ACS_BG_FILENAME,
-    BG_TABLE_KEY_COL
+    BG_TABLE_KEY_COL,
+    CPDB_PATH, 
+    CT_CW_PATH,
+    TRACT_ZIP_PATH,
+    MSA_PATH, MSA_SHEET
 )
+
+# relative path to main level of project
+REL_PATH = ".."
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -80,8 +87,31 @@ def process_acs_bg_tables():
         lambda df1, df2: df1.merge(df2, on=BG_TABLE_KEY_COL, how="outer"), 
         df_list)
     acs_df = extract_bg_fips_from_geo_id(acs_df)
+    print("Saving step 1 data")
     save_summary_df(acs_df, "acs_data_step_1")
     return acs_df
+
+
+def crosswalk_ct_fips(pdb_df):
+    """Cross-walk old FIPS to new FIPS for CT entities.
+    """
+    # Block-to-block crosswalk data downloaded from here: 
+    # https://github.com/CT-Data-Collaborative/2022-tract-crosswalk
+    cw_df = pd.read_csv(f"{REL_PATH}/{CT_CW_PATH}", dtype="object")
+
+    # need to 0-pad fips numbers:
+    cw_df['block_fips_2020'] = cw_df['block_fips_2020'].apply(lambda x: x.zfill(15))
+    cw_df['block_fips_2022'] = cw_df['block_fips_2022'].apply(lambda x: x.zfill(15))
+    # data is at block level; we want blockgroup
+    cw_df['bg_fips_2020'] = cw_df['block_fips_2020'].str[:-3]
+    cw_df['bg_fips_2022'] = cw_df['block_fips_2022'].str[:-3]
+    cw_df_bg = cw_df[['bg_fips_2020', 'bg_fips_2022']].drop_duplicates()
+    # merge with Planning Database
+    merge_df = pdb_df.merge(cw_df_bg, left_on='GIDBG', right_on='bg_fips_2020', how='left')
+    merge_df['GIDBG'] = np.where(merge_df['bg_fips_2020'].isna(), 
+                                 merge_df['GIDBG'], merge_df['bg_fips_2022'])
+    # clean up
+    return merge_df.drop(columns=['bg_fips_2020', 'bg_fips_2022'])
 
 
 # =========================
@@ -160,16 +190,21 @@ if __name__ == "__main__":
             'Non_Inst_GQ_CEN_2020': 'int',
         }
         pdb_cols = pdb_dtype_dict.keys()
-        pdb_df = pd.read_csv("../data/pdb2022bg.csv", sep=",", dtype=pdb_dtype_dict)
+        pdb_df = pd.read_csv(f"{REL_PATH}/{CPDB_PATH}", sep=",", dtype=pdb_dtype_dict)
+        pdb_df = pdb_df[pdb_cols]
 
-        # note: we use an inner join -- this ignores the CT mis-match for now
-        # TODO: figure out CT geo's
-        bg_df = step_2_df.merge(pdb_df[pdb_cols], how='inner', 
-                                left_on='bg_fips', right_on='GIDBG')
+        # The Census implemented Connecticut's change from counties to "planning regions" in 2022.
+        # The 2022 ACS data has the new FIPS numbers/designations, but the 2020 Planning Database
+        # does not. We must therefore leverage a cross-walk to join the two datasets for the
+        # state of CT.
+        pdb_cw_df = crosswalk_ct_fips(pdb_df)
 
-        
+        # merge together the datasets
+        bg_df = step_2_df.merge(pdb_cw_df, how='inner', left_on='bg_fips', right_on='GIDBG')
+
+
         # DERIVE ATTRIBUTES FROM CPDB et al
-
+        # --------------------
         print("Deriving other attributes")
     
         bg_df['pop_density_sqmile'] = bg_df['population'] / bg_df[area_col]
@@ -196,7 +231,7 @@ if __name__ == "__main__":
     step_3_drop_cols = [
         'GIDBG', 'Inst_GQ_CEN_2020', 'Non_Inst_GQ_CEN_2020', 
         'Tot_Population_CEN_2020', 'Tot_GQ_CEN_2020', 
-        # 'Median_Age_ACS_16_20'
+        'Median_Age_ACS_16_20'
     ]
 
     # --------------------
@@ -249,8 +284,8 @@ if __name__ == "__main__":
     if step < 5:
         print("Merging ZIP & MSA data")
         step_4_df = step_4_df.drop(columns=step_4_drop_cols)
-        TRACT_ZIP_PATH = "../data/TRACT_ZIP_092023.xlsx"
-        tract_zip_df = pd.read_excel(TRACT_ZIP_PATH, 
+        # TRACT_ZIP_PATH = "../data/TRACT_ZIP_092023.xlsx"
+        tract_zip_df = pd.read_excel(f"{REL_PATH}/{TRACT_ZIP_PATH}", 
                                      dtype={'TRACT': 'object', 'ZIP': 'object'})
         # assign zip with largest pop % to tract
         max_ratio_idxs = tract_zip_df.groupby('TRACT')['RES_RATIO'].idxmax()
@@ -261,16 +296,16 @@ if __name__ == "__main__":
                 columns={'TRACT': 'census_tract_fips', 'ZIP': 'zip'}), 
                 on='census_tract_fips', how='left')
 
-        MSA_PATH = "../data/county-msa-csa-crosswalk.xlsx"
-        msa_df = pd.read_excel(MSA_PATH, sheet_name='Feb. 2013 Crosswalk',
+        msa_df = pd.read_excel(f"{REL_PATH}/{MSA_PATH}", sheet_name=MSA_SHEET,
                                dtype={'County Code': 'object'})
-        msa_df['County Code'] = msa_df['County Code'].apply(lambda x: str(x).zfill(5))
-        tmp_df2 = tmp_df1.merge(msa_df[['County Code', 'MSA Code', 'MSA Title']], 
-                                left_on='county_fips', right_on='County Code', how='left')
+        msa_df['county_fips'] = msa_df['County Code'].apply(lambda x: str(x).zfill(5))
+        tmp_df2 = tmp_df1.merge(msa_df[['county_fips', 'MSA Code', 'MSA Title']], 
+                                on='county_fips',  how='left')
 
-        step_5_df = (tmp_df2.drop(columns=['County Code'])
-                     .rename(columns={'MSA Code': 'msa', 'MSA Title': 'msa_name'})
-        )
+        step_5_df = tmp_df2.rename(columns={
+                         'MSA Code': 'msa_code', 
+                         'MSA Title': 'MSA'
+                         })
 
         print("Saving Final (step 5) data")
         save_summary_df(step_5_df, ACS_BG_FILENAME)

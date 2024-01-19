@@ -5,7 +5,7 @@ from .util import (get_column_names_df,
                   process_all_cols_bg_table,
                   process_some_cols_bg_table
                   )
-from .configs import BG_TABLE_KEY_COL
+from configs import BG_TABLE_KEY_COL
 
 
 

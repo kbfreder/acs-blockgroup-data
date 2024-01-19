@@ -3,9 +3,10 @@ from ftplib import FTP
 import os, sys
 from tqdm import tqdm
 
-from process_bg_tables.configs import YEAR, DATASET_YRS
+sys.path.append("..")
+from configs import YEAR, DATASET_YRS
 
-OUTDIR = '../data'
+OUTDIR = '../../data'
 
 # get tables for a summary level and output file for each
 def table_for_sumlevel(tbl_id, year, dataset, sumlevel):

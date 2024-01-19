@@ -17,7 +17,7 @@ from .util import (
     process_some_cols_bg_table,
     process_all_cols_bg_table
     )
-from .configs import (
+from configs import (
     BG_TABLE_KEY_COL
     )
 
@@ -41,20 +41,6 @@ def get_pct_internet():
 
     return bg_df[[BG_TABLE_KEY_COL,  'pct_hh_internet_subscription']]
 
-
-# def get_pct_vehicle_ownership():
-    # tbl_id = 'B25044' # Tenure by Vehicles Available
-    # col_idxs = [1, 3, 10] # Total, Owner occupied: No vehicle available, Renter occupied: No vehicle available
-    # col_names = ["total", "hh_no_vehicle_owner_occ", "hh_no_vehicle_renter_occ"]
-    # bg_df = process_some_cols_bg_table(tbl_id, col_idxs, col_names, 'int')
-
-    # # pct ownership
-    # bg_df['hh_w_vehicles'] = bg_df['total'] - (
-    #     bg_df['hh_no_vehicle_owner_occ'] - bg_df['hh_no_vehicle_renter_occ']
-    # )
-    # bg_df['pct_hh_vehicle_ownership'] = bg_df['hh_w_vehicles'] / bg_df['total']
-
-    # return bg_df[[BG_TABLE_KEY_COL, 'pct_hh_vehicle_ownership']]
 
 def get_vehicle_data():
 
@@ -81,19 +67,7 @@ def get_vehicle_data():
 
     return bg_df[[BG_TABLE_KEY_COL, 'pct_hh_vehicle_ownership', 'avg_vehicles_per_hh']]
 
-
-# def get_agg_num_vehicles_per_hh():
-    # # Note: We ultimately want to calculate avg_num_vehicles_per_hh, but this table
-    # # doesn't include totaly num households in it. We pass along the aggregate
-    # # number of vehicles, and compute the average later
-
-    # tbl_id = 'B25046' # Aggregate Number of Vehicles Available by Tenure
-    # col_idx = 1 # Aggregate number of vehicles available
-    # col_name = "agg_num_vehicles"
-    # bg_df = process_some_cols_bg_table(tbl_id, [col_idx], [col_name], 'int')
-    # return bg_df[[BG_TABLE_KEY_COL, 'agg_num_vehicles']]
-    
-
+  
 def get_pct_foodstamps():
     tbl_id = 'B19058' # Public Assistance Income or Food Stamps/SNAP in the Past 12 Months for Households
     col_idxs = [1, 2] # With cash public assistance or Food Stamps/SNAP

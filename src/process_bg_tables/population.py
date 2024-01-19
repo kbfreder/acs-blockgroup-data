@@ -3,7 +3,6 @@ from .util import (
     process_some_cols_bg_table,
     )
 
-
 def get_total_pop():
     tbl_id = 'B01003' # Total Population
     col_idx = 1 # Total
