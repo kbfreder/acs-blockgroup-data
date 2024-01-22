@@ -7,9 +7,12 @@ sys.path.append("..")
 from process_bg_tables.util import load_summary_df
 from configs import STATE_TABLE_NAME
 
-OUTDIR = "../../data/tigerweb"
+# path of this file, relative to parent folder of project/repo
+REL_PATH = "../.."
+OUTDIR = f"{REL_PATH}/data/tigerweb"
 STATE_FOLDER = "state_bg_shapefiles_2020"
 CONCAT_FOLDER = "us_bg_shapefiles_2020"
+
 
 if __name__ == "__main__":
 
