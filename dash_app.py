@@ -18,19 +18,20 @@ from src.configs import ACS_BG_FILENAME
 
 
 df = load_csv_with_dtypes(ACS_BG_FILENAME, ".") 
+print(df.head())
 # filter to match geo data:
-df = df[df['STATE'] == '55']
+df = df[df['state'] == 'WI']
 attrs = ["population", "pop_density_sqmile", 
-         "households", 'pct_hh_internet_subscription',
-       'pct_hh_vehicle_ownership', 'avg_vehicles_per_hh', 'pct_hh_foodstamps',
-       'pct_home_ownership', 
-         "median_age", 'prop_age_under_18', 'prop_age_25_34', 'prop_age_35_44',
-       'prop_age_45_54',  'prop_age_55_64', 'prop_age_65_74',
-       'prop_female', 'race_pct_white',
-       'race_pct_african_american', 'race_pct_nativeam', 'race_pct_asian',
-       'race_pct_other', 'race_pct_hispanic', 'median_income',
-       'pct_college_enrolled', 'prop_college_educated', 'pct_married',
-         'pct_tract_military_employed'
+        "households", 'pct_hh_internet_subscription',
+        'pct_hh_vehicle_ownership', 'avg_vehicles_per_hh', 'pct_hh_foodstamps',
+        'pct_home_ownership', 
+        "median_age", 'prop_age_under_18', 'prop_age_25_34', 'prop_age_35_44',
+        'prop_age_45_54',  'prop_age_55_64', 'prop_age_65_74',
+        'prop_female', 'race_pct_white',
+        'race_pct_african_american', 'race_pct_nativeam', 'race_pct_asian',
+        'race_pct_other', 'race_pct_hispanic', 'median_income',
+        'pct_college_enrolled', 'prop_college_educated', 'pct_married',
+        'pct_tract_military_employed'
     ]
 with open("data/tigerweb/us_bg_shapefiles_2020/wi/wi.json", "r") as file:
     geo_json = json.load(file)
@@ -51,7 +52,6 @@ app.layout = html.Div([
     
     html.Div([
         html.Div([
-            # dcc.Graph(id = 'pie_graph', figure = {})
             dcc.Graph(id='hist-plot')
         ], style={'width': '50%', 'display': 'inline-block'}),
         html.Div([
