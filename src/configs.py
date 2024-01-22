@@ -29,6 +29,7 @@ TRACT_ZIP_PATH = "data/TRACT_ZIP_092023.xlsx"
 MSA_PATH = "data/qcew-county-msa-csa-crosswalk.xlsx"
 MSA_SHEET = "Feb. 2013 Crosswalk"
 ACS_DATA_DIR = "data/parsed_acs_data"
+MIL_GEO_IND_PATH = "data/mil_base_geo_join.csv"
 
 # the final data
 FINAL_OUTPUT_DIR = "/"

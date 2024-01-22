@@ -19,6 +19,7 @@ from process_bg_tables.fips_names import generate_bg_fips_data
 from process_bg_tables.util import (
     extract_bg_fips_from_geo_id,
     load_summary_df,
+    load_csv_with_dtypes,
     save_summary_df,
     save_csv_and_dtypes
 )
@@ -29,11 +30,14 @@ from configs import (
     CPDB_PATH, 
     CT_CW_PATH,
     TRACT_ZIP_PATH,
-    MSA_PATH, MSA_SHEET
+    MSA_PATH, MSA_SHEET,
+    MIL_GEO_IND_PATH
 )
 
 # relative path to main level of project
 REL_PATH = ".."
+MAX_STEP = 6
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -43,7 +47,7 @@ def parse_args():
         type=int,
         default=0,
         required=False,
-        choices=range(1,5)
+        choices=range(1,MAX_STEP)
     )
     args = parser.parse_args()
     return args
@@ -306,6 +310,22 @@ if __name__ == "__main__":
 
         step_5_df = tmp_df2.rename(columns={'MSA Code': 'msa_code', 'MSA Title': 'MSA'})
 
-        print("Saving Final (step 5) data")
-        # save_summary_df(step_5_df, ACS_BG_FILENAME)
-        save_csv_and_dtypes(step_5_df, f"{FINAL_OUTPUT_DIR}/{ACS_BG_FILENAME}", REL_PATH)
+        print("Saving step 5 data")
+        save_summary_df(step_5_df, "acs_data_step_4")
+    elif step == 5:
+        print("Loading step 5 data")
+        step_5_df = load_summary_df("acs_data_step_5")
+
+    if step < 6:
+        print("Merging in Military Base Geo indiciators")
+        mil_geo_df = load_csv_with_dtypes(MIL_GEO_IND_PATH, REL_PATH)
+
+        merge_df = step_5_df.merge(mil_geo_df, how='left',
+                                   left_on='bg_fips', right_on='GEOID'
+                                   )
+        
+        final_df = merge_df.drop(columns=['GEOID'])
+
+        print("Saving Final data")
+        save_csv_and_dtypes(final_df, f"{FINAL_OUTPUT_DIR}/{ACS_BG_FILENAME}", REL_PATH)
+        print("Done!")
