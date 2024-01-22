@@ -13,6 +13,8 @@ from configs import MIL_GEO_IND_PATH
 
 # path of this file, relative to parent folder of project/repo
 REL_PATH = "../.."
+# column name assigned to indicator field
+MIL_BASE_IND_COL = "military_base_flag_geo"
 
 def fetch_military_geo_data():
     page_list = pd.read_html("https://tigerweb.geo.census.gov/tigerwebmain/Files/acs23/tigerweb_acs23_military_us.html")
@@ -44,7 +46,7 @@ def main(save_file=True):
     mil_base_ind_df = pd.DataFrame(tmp)
     mil_base_ind_df.columns = ['num_bases']
     mil_base_ind_df.reset_index(inplace=True)
-    mil_base_ind_df['military_base_flag_geo'] = np.where(mil_base_ind_df['num_bases'] > 0, 1, 0)
+    mil_base_ind_df[MIL_BASE_IND_COL] = np.where(mil_base_ind_df['num_bases'] > 0, 1, 0)
 
     mil_base_ind_df = mil_base_ind_df.drop(columns=['num_bases'])
 
