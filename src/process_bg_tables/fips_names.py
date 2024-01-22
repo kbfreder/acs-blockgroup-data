@@ -29,7 +29,7 @@ def generate_bg_fips_data():
                                 + county_geo_df['COUNTY']
     )
     # get state names
-    state_geo_df = generate_state_fips_data(geo_df)
+    state_geo_df = generate_state_fips_data(geo_df=geo_df)
 
     # merge 
     bg_cnty_df = block_geo_df.merge(county_geo_df[['county_fips', 'NAME']],

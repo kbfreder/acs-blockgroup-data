@@ -8,3 +8,5 @@ zz.Purgatory/
 
 src/creating_blockgroup_dataset_2020.R
 *.xlsx
+*.csv
+*.pkl
