@@ -1,12 +1,15 @@
 
 import os, sys
 import pandas as pd
+from tqdm import tqdm
 
 sys.path.append("..")
 from process_bg_tables.util import load_summary_df, save_summary_df
 from configs import LAT_LON_FILENAME, STATE_TABLE_NAME
 
 
+# path of this file, relative to parent folder of project/repo
+REL_PATH = "../.."
 BASE_TW_BG_URL = "https://tigerweb.geo.census.gov/tigerwebmain/Files/acs23/tigerweb_acs23_blkgrp_2022_acs22_{}.html"
 
 
@@ -25,7 +28,7 @@ def fetch_state_lat_lon(state_abbr):
     return state_lat_lon_df[['bg_fips', 'CENTLAT', 'CENTLON', 'AREALAND']]
 
 
-def get_lat_lon_data(state_list):
+def fetch_process_all_lat_lon_data(state_list):
     """
     state_list: list(str)
         List of state 2-letter abbreviations.
@@ -33,7 +36,7 @@ def get_lat_lon_data(state_list):
     
     state_lat_lon_df_list = []
 
-    for state_abbr in state_list:
+    for state_abbr in tqdm(state_list, desc='states'):
         state_lat_lon_df = fetch_state_lat_lon(state_abbr)
         if state_lat_lon_df is not None:
             state_lat_lon_df_list.append(state_lat_lon_df)
@@ -52,9 +55,13 @@ def get_lat_lon_data(state_list):
     return lat_lon_df 
 
 
-if __name__ == "__main__":
-    ## TODO: add logic to create state lookup file if it doesn't already exist (chicken, egg)
-    state_lkup_df = load_summary_df(STATE_TABLE_NAME)
+def main(rel_path):
+    print("Fetching lat/lon data")
+    state_lkup_df = load_summary_df(STATE_TABLE_NAME, rel_path)
     state_list = state_lkup_df['STUSAB']
-    lat_lon_df = get_lat_lon_data(state_list)
-    save_summary_df(lat_lon_df, LAT_LON_FILENAME)
+    lat_lon_df = fetch_process_all_lat_lon_data(state_list)
+    save_summary_df(lat_lon_df, LAT_LON_FILENAME, rel_path)
+    print("")
+
+if __name__ == "__main__":
+    main(REL_PATH)
