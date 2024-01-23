@@ -12,7 +12,8 @@ from download_and_prep_data import (
     fetch_bg_shapefiles,
     fetch_acs_summary_files,
     fetch_lat_lon_data,
-    fetch_misc_files
+    fetch_misc_files,
+    process_zip_data,
 )
 
 
@@ -25,3 +26,4 @@ if __name__ == "__main__":
     combine_bg_shapefiles.main(REL_PATH)
     fetch_acs_summary_files.main(REL_PATH)
     fetch_lat_lon_data.main(REL_PATH)
+    process_zip_data.main(REL_PATH)
