@@ -18,7 +18,7 @@ Once all necessary data has been downloaded (see following section), it can be p
 External data must be downloaded prior to processing.
 
 ### Manual:
-These datasets must be downloaded manually. Save them to the `data/`. Update the respective variables in `config.py` as needed.
+These datasets must be downloaded manually. Save them to the `data/`. Update the respective variables in `config.py` as needed, which hold the filenames.
 
 - Census Planning Database
     - Download from here: https://www2.census.gov/adrm/PDB/2022/pdb2022bg.csv
@@ -33,11 +33,21 @@ These datasets must be downloaded manually. Save them to the `data/`. Update the
     - Download from: https://www.bls.gov/cew/classifications/areas/qcew-county-msa-csa-crosswalk.xlsx
     - Config variables: `MSA_PATH` and `MSA_SHEET`
 
-- Zip-Tract crosswalk:
-    - Donwload from: https://www.huduser.gov/portal/datasets/usps_crosswalk.html
-    - Requires registration
-    - Select 'TRACT-ZIP' crosswalk type
-    - Config variable: `TRACT_ZIP_PATH`
+- Zip crosswalk:
+    - Option: Tract-Zip crowsswalk (from HUD):
+        - Donwload from: https://www.huduser.gov/portal/datasets/usps_crosswalk.html
+            - Requires registration
+            - Select 'TRACT-ZIP' crosswalk type
+        - Config variable: `TRACT_ZIP_PATH`
+    - Option: Blockgroup-Zip crosswalk:
+        - Downlaod from: https://mcdc.missouri.edu/applications/geocorr2022.html
+            - Select all states
+            - Source geo = Census block group
+            - Target geo = ZIP/ZCTA
+            - Weighting variable = Population (default)
+        - Config variables: `BG_ZIP_RAW_PATH` & `BG_ZIP_DEDUP_PATH` (only need to update the year in the latter)
+    - Set `ZIP_SOURCE` in `configs.py` to indicate which option to use
+
 
 ### Automated / scripts
 Some datasets have scripts to aid in their download. See `src/download_and_prep_data`
@@ -57,6 +67,9 @@ Datasets & their scripts:
     - Download shapefiles for blockgroups. (Loops over all the states, then combines into a single dataset.)
     - Should be followed up by running `combine_bg_shapefiles.py`
         - requires state lookup file
+
+- `process_zip_data.py`
+    - Deduplicates blockgroup-to-zip crosswalk data and extract blockgroup FIPS.
 
 
 ### State lookup file
