@@ -6,13 +6,14 @@ from tqdm import tqdm
 sys.path.append("..")
 from configs import YEAR, DATASET_YRS
 
-OUTDIR = '../../data'
+REL_PATH = "../.."
+OUTDIR = "data"
 
 # get tables for a summary level and output file for each
-def table_for_sumlevel(tbl_id, year, dataset, sumlevel):
+def fetch_table_at_sum_level(tbl_id, year, dataset, sum_level, rel_path):
 
     # create output directory. 
-    outdir = f"{OUTDIR}/sumlevel={sumlevel}" #'output'
+    outdir = f"{rel_path}/{OUTDIR}/sumlevel={sum_level}"
     os.makedirs(outdir, exist_ok=True)
 
     ftp_dir =f"/programs-surveys/acs/summary_file/{year}/table-based-SF/data/{dataset}YRData/"
@@ -23,11 +24,13 @@ def table_for_sumlevel(tbl_id, year, dataset, sumlevel):
         ftp.cwd(ftp_dir)
         files = [x for x in ftp.nlst() if f"{tbl_id}.dat" in x or (tbl_id=="*" and ".dat" in x)]
         num_files = len(files)
-        print(f"Will check {num_files} files for sumlevel {sumlevel}")
+        print(f"Will check {num_files} files for sumlevel {sum_level}")
     else:
         print(f"Attempting to download table {tbl_id}")
         files = [f"acsdt{dataset}y{year}-{tbl_id.lower()}.dat"]
 
+    # TODO: refactor this so we don't print out progress or final count
+    # if only downloading a single table
     c = 0 # counter
     for file in tqdm(files, "Checked: ", unit="files"):
         # read data file and query for summary level (http faster than ftp)
@@ -38,23 +41,21 @@ def table_for_sumlevel(tbl_id, year, dataset, sumlevel):
             print(f"Could not find {file_uri}")
             return None
         
-        df = df[ df['GEO_ID'].str.startswith(sumlevel) ]
+        df = df[ df['GEO_ID'].str.startswith(sum_level) ]
 
-        #output
         if not df.empty:
             c += 1
             df.to_csv(f"{outdir}/{file}", sep="|", index=False)
 
-    print(f"Found {c} files with sumlevel {sumlevel} data")
+    print(f"Found {c} files with sumlevel {sum_level} data")
 
 
-
+def main(rel_path):
     
-
-if __name__ == "__main__":
-
     # see: https://www.census.gov/programs-surveys/acs/geography-acs/geography-boundaries-by-year.html
     # for summary level codes
+    ## '150' = blockgroup
+    ## '140' = tract
     
     # ------------------
     # blockgroup tables
@@ -89,11 +90,12 @@ if __name__ == "__main__":
         'B27010',
         'B28002', 
     ]:
-        table_for_sumlevel(
+        fetch_table_at_sum_level(
             tbl_id=tbl_id,
             year=YEAR, 
             dataset=DATASET_YRS, 
-            sumlevel='150' # tract
+            sum_level='150',
+            rel_path=rel_path
         )
 
     # ------------------
@@ -113,3 +115,7 @@ if __name__ == "__main__":
     #         dataset=DATASET_YRS, 
     #         sumlevel='140' # tract
     #     )
+
+
+if __name__ == "__main__":
+    main(REL_PATH)
