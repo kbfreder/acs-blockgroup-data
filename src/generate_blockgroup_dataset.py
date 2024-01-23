@@ -99,32 +99,32 @@ def process_acs_bg_tables():
     return acs_df
 
 
-def crosswalk_ct_fips(pdb_df):
-    """Cross-walk old FIPS to new FIPS for CT entities.
+def get_ct_crosswalk():
+    """Get data that cross-walks old FIPS to new FIPS for CT entities.
     """
     # Block-to-block crosswalk data downloaded from here: 
     # https://github.com/CT-Data-Collaborative/2022-tract-crosswalk
     cw_df = pd.read_csv(f"{REL_PATH}/{CT_CW_PATH}", dtype="object")
 
     # need to 0-pad some numbers:
-    cw_df['block_fips_2020'] = cw_df['block_fips_2020'].apply(lambda x: x.zfill(15))
-    cw_df['block_fips_2022'] = cw_df['block_fips_2022'].apply(lambda x: x.zfill(15))
-    cw_df['zip5'] = cw_df['zip5'].apply(lambda x: x.zfill(5))
+    pad_dict = {
+        'block_fips_2020': 15,
+        'block_fips_2022': 15,
+        'county_fips_2020': 5,
+        'ce_fips_2022': 5,
+        'zip5': 5
+    }
+    for col, pad in pad_dict.items():
+        cw_df[col] = cw_df[col].apply(lambda x: x.zfill(pad))
+        
     # data is at block level; we want blockgroup
     cw_df['bg_fips_2020'] = cw_df['block_fips_2020'].str[:-3]
     cw_df['bg_fips_2022'] = cw_df['block_fips_2022'].str[:-3]
-    ## confirmed that there is only 1 zip per bg
-    cw_df_bg = cw_df[['bg_fips_2020', 'bg_fips_2022', 'zip5']].drop_duplicates()
-    # merge with Planning Database
-    merge_df = pdb_df.merge(cw_df_bg, left_on='GIDBG', right_on='bg_fips_2020', how='left')
-    merge_df['GIDBG'] = np.where(merge_df['bg_fips_2020'].isna(), 
-                                 merge_df['GIDBG'], merge_df['bg_fips_2022'])
-    # clean up
-    clean_df = (merge_df
-                .drop(columns=['bg_fips_2020', 'bg_fips_2022'])
-                .rename(columns={'zip5': 'zip_ct'})
-    )
-    return clean_df
+    ## confirmed that there is only 1 zip or county per bg
+    cw_df_bg = cw_df[['bg_fips_2020', 'bg_fips_2022', 'zip5',
+                      'county_fips_2020', 'ce_fips_2022', ]].drop_duplicates()
+
+    return cw_df_bg
 
 
 # =========================
@@ -177,10 +177,22 @@ if __name__ == "__main__":
 
 
     # --------------------
-    # 3. CENSUS PLANNING DATABASE (CPDB)
+    # 3. THINGS THAT REQUIRE THE CONNECTICUT CROSSWALK
         
+        ## CENSUS PLANNING DATABASE (CPDB)
         ## Download from here: https://www2.census.gov/adrm/PDB/2022/pdb2022bg.csv
         ## Or Google for latest/updated location
+
+        ## ZIP CODE
+        ## cross-walk between tract & zip code is available from HUD: 
+        ## https://www.huduser.gov/portal/datasets/usps_crosswalk.html
+        ## alt: cross-walk between blockgroup & zip from MCDC:
+        ## https://mcdc.missouri.edu/applications/geocorr2022.html
+
+        ## MSA 
+        ## cross-walk between county & MSA (Metropolitan Statistical Areas) from BLS:
+        ## https://www.bls.gov/cew/classifications/areas/county-msa-csa-crosswalk.htm
+        
     # --------------------
 
     # these must be defined outside of if/else 
@@ -191,6 +203,7 @@ if __name__ == "__main__":
     non_inst_pop_src = 'acs' 
 
     if step < 3:
+        ## TODO: move loading PDB to a helper func
         print("Loading & Processing Census Planning Database data")
         pdb_dtype_dict = {
             'GIDBG': 'object',
@@ -210,29 +223,83 @@ if __name__ == "__main__":
         # The 2022 ACS data has the new FIPS numbers/designations, but the 2020 Planning Database
         # does not. We must therefore leverage a cross-walk to join the two datasets for the
         # state of CT.
-        pdb_cw_df = crosswalk_ct_fips(pdb_df)
+        ## This function returns old bg --> new bg crosswalk, plus zip and old & new county fips
+        ct_cw_df = get_ct_crosswalk()
 
-        # merge together the datasets
-        bg_df = step_2_df.merge(pdb_cw_df, how='inner', left_on='bg_fips', right_on='GIDBG')
+        # merge with Planning Database
+        pdb_cw_df = pdb_df.merge(ct_cw_df, how='left',
+                                 left_on='GIDBG', right_on='bg_fips_2020')
+        pdb_cw_df['bg_fips'] = np.where(pdb_cw_df['bg_fips_2020'].isna(), 
+                                     pdb_cw_df['GIDBG'], pdb_cw_df['bg_fips_2022'])
+        pdb_cw_df = (pdb_cw_df
+                    .drop(columns=['bg_fips_2020', 'bg_fips_2022', 'GIDBG'])
+                    .rename(columns={'zip5': 'zip_ct'})
+        )
+
+        # merge back wtih ACS data
+        pdb_merge_df = step_2_df.merge(pdb_cw_df, how='inner', on='bg_fips')
+
+
+        # ZIP
+        # ----------------
+        print("Loading & merging Zip data")
+        # TODO: move tract dedup to process_zip_data.py
+        if ZIP_SOURCE == 'tract':
+            tract_zip_df = pd.read_excel(f"{REL_PATH}/{TRACT_ZIP_PATH}", 
+                                        dtype={'TRACT': 'object', 'ZIP': 'object'})
+            # assign zip with largest pop % to tract
+            max_ratio_idxs = tract_zip_df.groupby('TRACT')['RES_RATIO'].idxmax()
+            tract_zip_dedup = tract_zip_df.loc[max_ratio_idxs]
+            tract_zip_dedup = tract_zip_dedup[['TRACT', 'ZIP']].rename(
+                    columns={'TRACT': 'census_tract_fips', 'ZIP': 'zip'})
+            
+            zip_merge_df = pdb_merge_df.merge(tract_zip_dedup, how='left',
+                                              on='census_tract_fips')
+        
+        elif ZIP_SOURCE == 'blockgroup':
+            # this zip crosswalk data has already been pre-processed
+            # (see `src/download_and_prep_data/process_zip_data.py`)
+            bg_zip_dedup_df = load_csv_with_dtypes(BG_ZIP_DEDUP_PATH, REL_PATH)
+            zip_merge_df = pdb_merge_df.merge(bg_zip_dedup_df, on='bg_fips', how='left')
+
+        # regardless of source, harmonize zip for CT
+        zip_merge_df['zip'] = zip_merge_df['zip'].fillna(zip_merge_df['zip_ct'])
+        zip_merge_df.drop(columns=['zip_ct'], inplace=True)
+
+
+        # MSA data
+        # --------------------
+        print("Loading & merging MSA data")
+        msa_df = pd.read_excel(f"{REL_PATH}/{MSA_PATH}", sheet_name=MSA_SHEET,
+                               dtype={'County Code': 'object'})
+        msa_df['county_fips'] = msa_df['County Code'].apply(lambda x: str(x).zfill(5))
+        
+        # merge & harmonize with CT crosswalk
+        msa_cw_df = msa_df.merge(ct_cw_df, how='left', left_on='county_fips', right_on='county_fips_2020')
+        msa_cw_df['county_fips'] = np.where(msa_cw_df['county_fips_2020'].isna(), msa_cw_df['county_fips'], msa_cw_df['ce_fips_2022'])
+        
+        # merge with rest of data
+        msa_merge_df = zip_merge_df.merge(msa_df[['county_fips', 'MSA Code', 'MSA Title']], on='county_fips',  how='left')
+        step_3_df = msa_merge_df.rename(columns={'MSA Code': 'msa_code', 'MSA Title': 'MSA'})
 
 
         # DERIVE ATTRIBUTES FROM CPDB et al
         # --------------------
         print("Deriving other attributes")
     
-        bg_df['pop_density_sqmile'] = bg_df['population'] / bg_df[area_col]
+        step_3_df['pop_density_sqmile'] = step_3_df['population'] / step_3_df[area_col]
         # area from TigerWeb can be NaN, so fillna
-        bg_df['pop_density_sqmile'] = bg_df['pop_density_sqmile'].fillna(0)
+        step_3_df['pop_density_sqmile'] = step_3_df['pop_density_sqmile'].fillna(0)
 
-        bg_df['median_age'] = bg_df[median_age_col]
+        step_3_df['median_age'] = step_3_df[median_age_col]
 
-        bg_df['pct_inst_groupquarters_2020'] = bg_df['Inst_GQ_CEN_2020'] / bg_df['Tot_Population_CEN_2020']
-        bg_df['pct_non_inst_groupquarters_2020'] = bg_df['Non_Inst_GQ_CEN_2020'] / bg_df['Tot_Population_CEN_2020']
+        step_3_df['pct_inst_groupquarters_2020'] = step_3_df['Inst_GQ_CEN_2020'] / step_3_df['Tot_Population_CEN_2020']
+        step_3_df['pct_non_inst_groupquarters_2020'] = step_3_df['Non_Inst_GQ_CEN_2020'] / step_3_df['Tot_Population_CEN_2020']
         if non_inst_pop_src == 'cpdb':
-            bg_df['non_institutionized_pop'] = round(
-                bg_df['population'] * (1-bg_df['pct_inst_groupquarters_2020']), 0)
+            step_3_df['non_institutionized_pop'] = round(
+                step_3_df['population'] * (1-step_3_df['pct_inst_groupquarters_2020']), 0)
 
-        step_3_df = bg_df.rename(columns={
+        step_3_df = step_3_df.rename(columns={
             'AIAN_LAND': 'amindian_aknative_hawaiiannative_land_flag'
         })
         print("Saving step 3 data")
@@ -242,7 +309,7 @@ if __name__ == "__main__":
         step_3_df = load_summary_df("acs_data_step_3")
 
     step_3_drop_cols = [
-        'GIDBG', 'Inst_GQ_CEN_2020', 'Non_Inst_GQ_CEN_2020', 
+        'Inst_GQ_CEN_2020', 'Non_Inst_GQ_CEN_2020', 
         'Tot_Population_CEN_2020', 'Tot_GQ_CEN_2020', 
         'Median_Age_ACS_16_20'
     ]
@@ -284,68 +351,68 @@ if __name__ == "__main__":
                         'military_employed', 'tract_military_employed',
                         ]
 
-    # --------------------
-    # 5. ZIP CODE & MSA
+    # # --------------------
+    # # 5. ZIP CODE & MSA
 
-        ## cross-walk between tract & zip code is available from HUD: 
-        ## https://www.huduser.gov/portal/datasets/usps_crosswalk.html
+    #     ## cross-walk between tract & zip code is available from HUD: 
+    #     ## https://www.huduser.gov/portal/datasets/usps_crosswalk.html
 
-        ## cross-walk between county & MSA (Metropolitan Statistical Areas) from BLS:
-        ## https://www.bls.gov/cew/classifications/areas/county-msa-csa-crosswalk.htm
+    #     ## cross-walk between county & MSA (Metropolitan Statistical Areas) from BLS:
+    #     ## https://www.bls.gov/cew/classifications/areas/county-msa-csa-crosswalk.htm
         
-    # --------------------
+    # # --------------------
+    # if step < 5:
+    #     try: 
+    #         step_4_df = step_4_df.drop(columns=step_4_drop_cols)
+    #     except KeyError:
+    #         pass
+        
+    #     print("Merging ZIP & MSA data")
+    #     if ZIP_SOURCE == 'tract':
+    #         tract_zip_df = pd.read_excel(f"{REL_PATH}/{TRACT_ZIP_PATH}", 
+    #                                     dtype={'TRACT': 'object', 'ZIP': 'object'})
+    #         # assign zip with largest pop % to tract
+    #         max_ratio_idxs = tract_zip_df.groupby('TRACT')['RES_RATIO'].idxmax()
+    #         tract_zip_dedup = tract_zip_df.loc[max_ratio_idxs]
+
+    #         zip_merge_df = step_4_df.merge(
+    #             tract_zip_dedup[['TRACT', 'ZIP']].rename(
+    #                 columns={'TRACT': 'census_tract_fips', 'ZIP': 'zip'}), 
+    #                 on='census_tract_fips', how='left')
+        
+    #     elif ZIP_SOURCE == 'blockgroup':
+    #         # this zip crosswalk data has already been pre-processed
+    #         # (see `src/download_and_prep_data/process_zip_data.py`)
+    #         bg_zip_dedup_df = load_csv_with_dtypes(BG_ZIP_DEDUP_PATH, REL_PATH)
+    #         zip_merge_df = step_4_df.merge(bg_zip_dedup_df, on='bg_fips', how='left')
+
+    #     # regardless of source, harmonize zip for CT
+    #     zip_merge_df['zip'] = zip_merge_df['zip'].fillna(zip_merge_df['zip_ct'])
+
+    #     # MSA data
+    #     msa_df = pd.read_excel(f"{REL_PATH}/{MSA_PATH}", sheet_name=MSA_SHEET,
+    #                            dtype={'County Code': 'object'})
+    #     msa_df['county_fips'] = msa_df['County Code'].apply(lambda x: str(x).zfill(5))
+        
+    #     # merge together
+    #     msa_merge_df = zip_merge_df.merge(msa_df[['county_fips', 'MSA Code', 'MSA Title']], 
+    #                             on='county_fips',  how='left')
+    #     step_5_df = (msa_merge_df
+    #                  .drop(columns=['zip_ct'])
+    #                  .rename(columns={'MSA Code': 'msa_code', 'MSA Title': 'MSA'})
+    #     )
+
+    #     print("Saving step 5 data")
+    #     save_summary_df(step_5_df, "acs_data_step_5")
+    # elif step == 5:
+    #     print("Loading step 5 data")
+    #     step_5_df = load_summary_df("acs_data_step_5")
+
     if step < 5:
-        try: 
-            step_4_df = step_4_df.drop(columns=step_4_drop_cols)
-        except KeyError:
-            pass
-        
-        print("Merging ZIP & MSA data")
-        if ZIP_SOURCE == 'tract':
-            tract_zip_df = pd.read_excel(f"{REL_PATH}/{TRACT_ZIP_PATH}", 
-                                        dtype={'TRACT': 'object', 'ZIP': 'object'})
-            # assign zip with largest pop % to tract
-            max_ratio_idxs = tract_zip_df.groupby('TRACT')['RES_RATIO'].idxmax()
-            tract_zip_dedup = tract_zip_df.loc[max_ratio_idxs]
-
-            zip_merge_df = step_4_df.merge(
-                tract_zip_dedup[['TRACT', 'ZIP']].rename(
-                    columns={'TRACT': 'census_tract_fips', 'ZIP': 'zip'}), 
-                    on='census_tract_fips', how='left')
-        
-        elif ZIP_SOURCE == 'blockgroup':
-            # this zip crosswalk data has already been pre-processed
-            # (see `src/download_and_prep_data/process_zip_data.py`)
-            bg_zip_dedup_df = load_csv_with_dtypes(BG_ZIP_DEDUP_PATH, REL_PATH)
-            zip_merge_df = step_4_df.merge(bg_zip_dedup_df, on='bg_fips', how='left')
-
-        # regardless of source, harmonize zip for CT
-        zip_merge_df['zip'] = zip_merge_df['zip'].fillna(zip_merge_df['zip_ct'])
-
-        # MSA data
-        msa_df = pd.read_excel(f"{REL_PATH}/{MSA_PATH}", sheet_name=MSA_SHEET,
-                               dtype={'County Code': 'object'})
-        msa_df['county_fips'] = msa_df['County Code'].apply(lambda x: str(x).zfill(5))
-        
-        # merge together
-        msa_merge_df = zip_merge_df.merge(msa_df[['county_fips', 'MSA Code', 'MSA Title']], 
-                                on='county_fips',  how='left')
-        step_5_df = (msa_merge_df
-                     .drop(columns=['zip_ct'])
-                     .rename(columns={'MSA Code': 'msa_code', 'MSA Title': 'MSA'})
-        )
-
-        print("Saving step 5 data")
-        save_summary_df(step_5_df, "acs_data_step_4")
-    elif step == 5:
-        print("Loading step 5 data")
-        step_5_df = load_summary_df("acs_data_step_5")
-
-    if step < 6:
         print("Merging in Military Base Geo indiciators")
         mil_geo_df = load_csv_with_dtypes(MIL_GEO_IND_PATH, REL_PATH)
 
-        msa_merge_df = step_5_df.merge(mil_geo_df, how='left',
+        msa_merge_df = step_4_df.merge(mil_geo_df, how='left',
                                    left_on='bg_fips', right_on='GEOID'
                                    )
         
