@@ -28,8 +28,9 @@ CT_CW_PATH = "data/2022blockcrosswalk.csv"
 
 # zip codes
 TRACT_ZIP_PATH = "data/TRACT_ZIP_092023.xlsx"
+TRACT_ZIP_DEDUP_PATH = "data/tract_zip.csv"
 BG_ZIP_RAW_PATH = "data/geocorr2022_all-states.csv"
-BG_ZIP_DEDUP_PATH = "data/bg_zip_2022.csv"
+BG_ZIP_DEDUP_PATH = "data/bg_zip.csv"
 
 MSA_PATH = "data/qcew-county-msa-csa-crosswalk.xlsx"
 MSA_SHEET = "Feb. 2013 Crosswalk"

@@ -45,7 +45,7 @@ These datasets must be downloaded manually. Save them to the `data/`. Update the
             - Source geo = Census block group
             - Target geo = ZIP/ZCTA
             - Weighting variable = Population (default)
-        - Config variables: `BG_ZIP_RAW_PATH` & `BG_ZIP_DEDUP_PATH` (only need to update the year in the latter)
+        - Config variables: `BG_ZIP_RAW_PATH` 
     - Set `ZIP_SOURCE` in `configs.py` to indicate which option to use
 
 
