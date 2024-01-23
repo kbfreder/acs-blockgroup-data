@@ -1,5 +1,4 @@
 
-import os, sys
 import argparse
 
 import pandas as pd
@@ -107,19 +106,25 @@ def crosswalk_ct_fips(pdb_df):
     # https://github.com/CT-Data-Collaborative/2022-tract-crosswalk
     cw_df = pd.read_csv(f"{REL_PATH}/{CT_CW_PATH}", dtype="object")
 
-    # need to 0-pad fips numbers:
+    # need to 0-pad some numbers:
     cw_df['block_fips_2020'] = cw_df['block_fips_2020'].apply(lambda x: x.zfill(15))
     cw_df['block_fips_2022'] = cw_df['block_fips_2022'].apply(lambda x: x.zfill(15))
+    cw_df['zip5'] = cw_df['zip5'].apply(lambda x: x.zfill(5))
     # data is at block level; we want blockgroup
     cw_df['bg_fips_2020'] = cw_df['block_fips_2020'].str[:-3]
     cw_df['bg_fips_2022'] = cw_df['block_fips_2022'].str[:-3]
-    cw_df_bg = cw_df[['bg_fips_2020', 'bg_fips_2022']].drop_duplicates()
+    ## confirmed that there is only 1 zip per bg
+    cw_df_bg = cw_df[['bg_fips_2020', 'bg_fips_2022', 'zip5']].drop_duplicates()
     # merge with Planning Database
     merge_df = pdb_df.merge(cw_df_bg, left_on='GIDBG', right_on='bg_fips_2020', how='left')
     merge_df['GIDBG'] = np.where(merge_df['bg_fips_2020'].isna(), 
                                  merge_df['GIDBG'], merge_df['bg_fips_2022'])
     # clean up
-    return merge_df.drop(columns=['bg_fips_2020', 'bg_fips_2022'])
+    clean_df = (merge_df
+                .drop(columns=['bg_fips_2020', 'bg_fips_2022'])
+                .rename(columns={'zip5': 'zip_ct'})
+    )
+    return clean_df
 
 
 # =========================
@@ -303,7 +308,7 @@ if __name__ == "__main__":
             max_ratio_idxs = tract_zip_df.groupby('TRACT')['RES_RATIO'].idxmax()
             tract_zip_dedup = tract_zip_df.loc[max_ratio_idxs]
 
-            zip_df = step_4_df.merge(
+            zip_merge_df = step_4_df.merge(
                 tract_zip_dedup[['TRACT', 'ZIP']].rename(
                     columns={'TRACT': 'census_tract_fips', 'ZIP': 'zip'}), 
                     on='census_tract_fips', how='left')
@@ -312,7 +317,10 @@ if __name__ == "__main__":
             # this zip crosswalk data has already been pre-processed
             # (see `src/download_and_prep_data/process_zip_data.py`)
             bg_zip_dedup_df = load_csv_with_dtypes(BG_ZIP_DEDUP_PATH, REL_PATH)
-            zip_df = step_4_df.merge(bg_zip_dedup_df, on='bg_fips', how='left')
+            zip_merge_df = step_4_df.merge(bg_zip_dedup_df, on='bg_fips', how='left')
+
+        # regardless of source, harmonize zip for CT
+        zip_merge_df['zip'] = zip_merge_df['zip'].fillna(zip_merge_df['zip_ct'])
 
         # MSA data
         msa_df = pd.read_excel(f"{REL_PATH}/{MSA_PATH}", sheet_name=MSA_SHEET,
@@ -320,9 +328,12 @@ if __name__ == "__main__":
         msa_df['county_fips'] = msa_df['County Code'].apply(lambda x: str(x).zfill(5))
         
         # merge together
-        msa_zip_df = zip_df.merge(msa_df[['county_fips', 'MSA Code', 'MSA Title']], 
+        msa_merge_df = zip_merge_df.merge(msa_df[['county_fips', 'MSA Code', 'MSA Title']], 
                                 on='county_fips',  how='left')
-        step_5_df = msa_zip_df.rename(columns={'MSA Code': 'msa_code', 'MSA Title': 'MSA'})
+        step_5_df = (msa_merge_df
+                     .drop(columns=['zip_ct'])
+                     .rename(columns={'MSA Code': 'msa_code', 'MSA Title': 'MSA'})
+        )
 
         print("Saving step 5 data")
         save_summary_df(step_5_df, "acs_data_step_4")
@@ -334,11 +345,11 @@ if __name__ == "__main__":
         print("Merging in Military Base Geo indiciators")
         mil_geo_df = load_csv_with_dtypes(MIL_GEO_IND_PATH, REL_PATH)
 
-        merge_df = step_5_df.merge(mil_geo_df, how='left',
+        msa_merge_df = step_5_df.merge(mil_geo_df, how='left',
                                    left_on='bg_fips', right_on='GEOID'
                                    )
         
-        final_df = merge_df.drop(columns=['GEOID'])
+        final_df = msa_merge_df.drop(columns=['GEOID'])
 
         print("Saving Final data")
         save_csv_and_dtypes(final_df, f"{FINAL_OUTPUT_DIR}/{ACS_BG_FILENAME}", REL_PATH)

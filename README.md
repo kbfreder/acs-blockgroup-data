@@ -1,7 +1,7 @@
 
 # ACS blockgroup data processing
 
-Process data from the 2022 American Community Survey (ACS) from the Census, (mostly) at the blockgroup level.
+Process data from the Census 2022 American Community Survey (ACS) at the blockgroup level.
 
 ## Processing data
 
