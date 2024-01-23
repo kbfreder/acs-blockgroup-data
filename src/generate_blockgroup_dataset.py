@@ -24,14 +24,17 @@ from process_bg_tables.util import (
     save_csv_and_dtypes
 )
 from configs import (
-    LAT_LON_FILENAME,
-    ACS_BG_FILENAME, FINAL_OUTPUT_DIR,
+    ACS_BG_FILENAME, 
     BG_TABLE_KEY_COL,
+    BG_ZIP_DEDUP_PATH,
     CPDB_PATH, 
     CT_CW_PATH,
-    TRACT_ZIP_PATH,
+    FINAL_OUTPUT_DIR,
+    LAT_LON_FILENAME,
     MSA_PATH, MSA_SHEET,
-    MIL_GEO_IND_PATH
+    MIL_GEO_IND_PATH,
+    TRACT_ZIP_PATH,
+    ZIP_SOURCE
 )
 
 # relative path to main level of project
@@ -287,28 +290,39 @@ if __name__ == "__main__":
         
     # --------------------
     if step < 5:
-        step_4_df = step_4_df.drop(columns=step_4_drop_cols)
+        try: 
+            step_4_df = step_4_df.drop(columns=step_4_drop_cols)
+        except KeyError:
+            pass
         
         print("Merging ZIP & MSA data")
-        tract_zip_df = pd.read_excel(f"{REL_PATH}/{TRACT_ZIP_PATH}", 
-                                     dtype={'TRACT': 'object', 'ZIP': 'object'})
-        # assign zip with largest pop % to tract
-        max_ratio_idxs = tract_zip_df.groupby('TRACT')['RES_RATIO'].idxmax()
-        tract_zip_dedup = tract_zip_df.loc[max_ratio_idxs]
+        if ZIP_SOURCE == 'tract':
+            tract_zip_df = pd.read_excel(f"{REL_PATH}/{TRACT_ZIP_PATH}", 
+                                        dtype={'TRACT': 'object', 'ZIP': 'object'})
+            # assign zip with largest pop % to tract
+            max_ratio_idxs = tract_zip_df.groupby('TRACT')['RES_RATIO'].idxmax()
+            tract_zip_dedup = tract_zip_df.loc[max_ratio_idxs]
 
-        tmp_df1 = step_4_df.merge(
-            tract_zip_dedup[['TRACT', 'ZIP']].rename(
-                columns={'TRACT': 'census_tract_fips', 'ZIP': 'zip'}), 
-                on='census_tract_fips', how='left')
+            zip_df = step_4_df.merge(
+                tract_zip_dedup[['TRACT', 'ZIP']].rename(
+                    columns={'TRACT': 'census_tract_fips', 'ZIP': 'zip'}), 
+                    on='census_tract_fips', how='left')
+        
+        elif ZIP_SOURCE == 'blockgroup':
+            # this zip crosswalk data has already been pre-processed
+            # (see `src/download_and_prep_data/process_zip_data.py`)
+            bg_zip_dedup_df = load_csv_with_dtypes(BG_ZIP_DEDUP_PATH, REL_PATH)
+            zip_df = step_4_df.merge(bg_zip_dedup_df, on='bg_fips', how='left')
 
+        # MSA data
         msa_df = pd.read_excel(f"{REL_PATH}/{MSA_PATH}", sheet_name=MSA_SHEET,
                                dtype={'County Code': 'object'})
         msa_df['county_fips'] = msa_df['County Code'].apply(lambda x: str(x).zfill(5))
         
-        tmp_df2 = tmp_df1.merge(msa_df[['county_fips', 'MSA Code', 'MSA Title']], 
+        # merge together
+        msa_zip_df = zip_df.merge(msa_df[['county_fips', 'MSA Code', 'MSA Title']], 
                                 on='county_fips',  how='left')
-
-        step_5_df = tmp_df2.rename(columns={'MSA Code': 'msa_code', 'MSA Title': 'MSA'})
+        step_5_df = msa_zip_df.rename(columns={'MSA Code': 'msa_code', 'MSA Title': 'MSA'})
 
         print("Saving step 5 data")
         save_summary_df(step_5_df, "acs_data_step_4")
