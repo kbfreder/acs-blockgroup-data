@@ -1,8 +1,5 @@
-import os, sys
-import argparse
-
+import sys
 import pandas as pd
-import numpy as np
 
 sys.path.append("..")
 from process_bg_tables.util import save_csv_and_dtypes

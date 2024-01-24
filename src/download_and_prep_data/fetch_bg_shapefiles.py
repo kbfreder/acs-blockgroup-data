@@ -1,5 +1,4 @@
 import os, sys
-import pandas as pd
 from urllib.request import urlretrieve
 from urllib.error import HTTPError
 import zipfile
