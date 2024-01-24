@@ -41,6 +41,23 @@ MIL_GEO_IND_PATH = "data/mil_base_geo_join.csv"
 FINAL_OUTPUT_DIR = "/"
 ACS_BG_FILENAME = f"ACS_BG_DATA_{YEAR}"
 
+# ======================
+# DEFINED "BY HAND"
+# ======================
+# Define crosswalk between "new" Connecticut (CT) county entity names and 
+# "old" MSA names. (Unable to find or generate a clean, 1:1 crosswalk. And
+# there are only 9.)
+CT_MSA_CW_DICT = { # ce_name_2022 --> MSA Title
+    'Western Connecticut Planning Region, Connecticut': 'Bridgeport-Stamford-Norwalk, CT MSA',
+    'Greater Bridgeport Planning Region, Connecticut': 'Bridgeport-Stamford-Norwalk, CT MSA',
+    'Naugatuck Valley Planning Region, Connecticut': None, # split between New Haven & Torrington, but probably OK to be left blank?
+    'Northwest Hills Planning Region, Connecticut': 'Torrington, CT MicroSA', 
+    'Capitol Planning Region, Connecticut': 'Hartford-West Hartford-East Hartford, CT MSA',
+    'Lower Connecticut River Valley Planning Region, Connecticut': None, # Middlesex Micro MSA -- techincally part of Hartford MSA but probably OK to be blank
+    'South Central Connecticut Planning Region, Connecticut': 'New Haven-Milford, CT MSA',
+    'Southeastern Connecticut Planning Region, Connecticut': 'Norwich-New London, CT MSA',
+    'Northeastern Connecticut Planning Region, Connecticut': 'Worcester, MA-CT MSA'
+}
 
 # ======================
 # CHOICES

@@ -28,6 +28,7 @@ from configs import (
     BG_ZIP_DEDUP_PATH,
     CPDB_PATH, 
     CT_CW_PATH,
+    CT_MSA_CW_DICT,
     FINAL_OUTPUT_DIR,
     LAT_LON_FILENAME,
     MSA_PATH, MSA_SHEET,
@@ -275,7 +276,7 @@ if __name__ == "__main__":
         )
 
         # merge back wtih ACS data
-        pdb_merge_df = step_2_df.merge(pdb_cw_df, how='inner', on='bg_fips')
+        pdb_merge_df = step_2_df.merge(pdb_cw_df, how='left', on='bg_fips')
 
         # derive attributes
         pdb_attr_df = derive_planning_db_attrs(
@@ -301,7 +302,6 @@ if __name__ == "__main__":
         zip_merge_df['zip'] = zip_merge_df['zip'].fillna(zip_merge_df['zip_ct'])
         zip_merge_df.drop(columns=['zip_ct'], inplace=True)
 
-
         # MSA data
         # --------------------
         print("Loading & merging MSA data")
@@ -309,14 +309,26 @@ if __name__ == "__main__":
                                dtype={'County Code': 'object'})
         msa_df['county_fips'] = msa_df['County Code'].apply(lambda x: str(x).zfill(5))
         
-        # merge & harmonize with CT crosswalk
-        msa_cw_df = msa_df.merge(ct_cw_df, how='left', left_on='county_fips', right_on='county_fips_2020')
-        msa_cw_df['county_fips'] = np.where(
-            msa_cw_df['county_fips_2020'].isna(), msa_cw_df['county_fips'], msa_cw_df['ce_fips_2022'])
-        
-        # merge with rest of data
-        msa_merge_df = zip_merge_df.merge(msa_cw_df[['county_fips', 'MSA Code', 'MSA Title']], on='county_fips',  how='left')
-        step_3_df = msa_merge_df.rename(columns={'MSA Code': 'msa_code', 'MSA Title': 'MSA'})
+
+        # The crosswalk between old & new CT counties/county equivalents is not a 1:1
+        # relationship, so using it to merge ACS data & MSA crosswalk results in duplicates
+        # in CT entries. Use a hand-defined crosswalk instead (`configs.CT_MSA_CW_DICT`)
+
+        # this will result in 100% nulls for CT (which we fill in below)
+        msa_merge_df = zip_merge_df.merge(msa_df[['county_fips', 'MSA Code', 'MSA Title']], 
+                                on='county_fips',  how='left')
+        msa_merge_df.rename(columns={'MSA Code': 'msa_code', 'MSA Title': 'MSA'}, inplace=True)
+
+        # get MSA Title --> Code lookup
+        msa_ct_df = msa_df[msa_df['county_fips'].str.startswith('09')]
+        tmp_dict = msa_ct_df[['MSA Title', 'MSA Code']].drop_duplicates().to_dict(orient='records')
+        ct_msa_title_code_dict = {d['MSA Title']: d['MSA Code'] for d in tmp_dict}
+
+        # apply crosswalk/lookups to CT entries
+        msa_merge_df['MSA'] = np.where(msa_merge_df['state_fips'] == '09', msa_merge_df['county_name'].map(CT_MSA_CW_DICT), msa_merge_df['MSA'])
+        msa_merge_df['msa_code'] = np.where(msa_merge_df['state_fips'] == '09', msa_merge_df['MSA'].map(ct_msa_title_code_dict), msa_merge_df['msa_code'])
+
+        step_3_df = msa_merge_df.drop(columns=['county_fips_2020', 'ce_fips_2022'])
 
         print("Saving step 3 data")
         save_summary_df(step_3_df, "acs_data_step_3")
