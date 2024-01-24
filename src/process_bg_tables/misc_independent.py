@@ -1,6 +1,4 @@
 
-from functools import reduce
-
 from .util import (
     process_some_cols_bg_table,
     )

@@ -1,7 +1,7 @@
 
 # ACS blockgroup data processing
 
-Process data from the 2022 American Community Survey (ACS) from the Census, (mostly) at the blockgroup level.
+Process data from the Census 2022 American Community Survey (ACS) at the blockgroup level.
 
 ## Processing data
 
@@ -45,7 +45,7 @@ These datasets must be downloaded manually. Save them to the `data/`. Update the
             - Source geo = Census block group
             - Target geo = ZIP/ZCTA
             - Weighting variable = Population (default)
-        - Config variables: `BG_ZIP_RAW_PATH` & `BG_ZIP_DEDUP_PATH` (only need to update the year in the latter)
+        - Config variables: `BG_ZIP_RAW_PATH` 
     - Set `ZIP_SOURCE` in `configs.py` to indicate which option to use
 
 
@@ -78,15 +78,15 @@ Datasets & their scripts:
 
 
 ## Notes:
-- Connecticut (state CT, state 09):
+- Connecticut (state CT, state code 09):
     - Connecticut changed from counties to "Planning Regions", and with it, the FIPS (INCITS) codes changed: https://www.federalregister.gov/documents/2022/06/06/2022-12063/change-to-county-equivalents-in-the-state-of-connecticut
     - The Census implemented these changes in 2022.
         - The 2022 ACS data has the new FIPS numbers/designations, 
         - The 2020 Planning Database does not. 
     - We must therefore leverage a cross-walk to join the two datasets for the state of CT
 
-- Jam Values
 
+- Jam Values
     - Per: https://www.census.gov/content/dam/Census/library/publications/2023/acs/acs_table_based_summary_file_handbook.pdf:
         A “jam value” is a hard-coded value used to explain
         the absence of data. The Table-Based Summary
