@@ -16,8 +16,9 @@ from download_and_prep_data import (
     fetch_lat_lon_data,
     fetch_misc_files,
     process_zip_data,
+    geo_merge_mil_bases
 )
-from configs import DATA_DIRS
+from configs import (DATA_DIRS, ZIP_SOURCE)
 
 
 REL_PATH = ".."
@@ -32,6 +33,5 @@ if __name__ == "__main__":
     combine_bg_shapefiles.main(REL_PATH)
     fetch_acs_summary_files.main(REL_PATH)
     fetch_lat_lon_data.main(REL_PATH)
-    process_zip_data.main(REL_PATH)
-
-    # TODO: add in geo_merge_mil_bases stuff?
+    process_zip_data.main(REL_PATH, ZIP_SOURCE)
+    geo_merge_mil_bases.main(REL_PATH)

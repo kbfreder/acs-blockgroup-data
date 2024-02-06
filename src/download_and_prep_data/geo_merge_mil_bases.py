@@ -31,12 +31,11 @@ def main(rel_path, save_file=True):
     mil_gdf = fetch_military_geo_data()
     
     print("Loading US blockgroup shapefile data")
-    # bg_shapefile_path = f"{REL_PATH}/data/tigerweb/us_bg_shapefiles_2020/us/"
     bg_shapefile_path = f"{rel_path}/{US_SHAPEFILE_PATH}"
     if os.path.exists(bg_shapefile_path):
         us_gdf = gpd.read_file(bg_shapefile_path)
     else:
-        print("Please run generate US blockgroup shapefile.")
+        print("Please generate US blockgroup shapefile.")
     
     print("Perforing spatial join")
     merge_df = us_gdf.sjoin(mil_gdf, how="left", predicate="contains")
@@ -51,18 +50,17 @@ def main(rel_path, save_file=True):
 
     mil_base_ind_df = mil_base_ind_df.drop(columns=['num_bases'])
 
-    print("Final lookup data:")
-    print(mil_base_ind_df.sample(10))
+    # print("Final lookup data:")
+    # print(mil_base_ind_df.sample(10))
 
     if save_file:
         print("Saving data")
         save_csv_and_dtypes(mil_base_ind_df,
                             MIL_GEO_IND_PATH,
-                            REL_PATH)
+                            rel_path)
     else:
         mil_base_ind_df
 
 
 if __name__ == "__main__":
     main(rel_path=REL_PATH)
-    # print("imports OK")

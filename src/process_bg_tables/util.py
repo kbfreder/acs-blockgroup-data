@@ -1,9 +1,7 @@
 
-import os
 import pickle
 import numpy as np
 import pandas as pd
-
 
 from configs import (
     ACS_PARSED_DATA_DIR, YEAR, DATASET_YRS, ACS_SUMMARY_FILES_DIR, BG_TABLE_KEY_COL

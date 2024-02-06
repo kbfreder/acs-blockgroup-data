@@ -11,7 +11,7 @@ from configs import (
     GEO_FILE_STUB,
     YEAR
 )
-# from process_bg_tables.util import save_csv_and_dtypes
+from process_bg_tables.util import save_csv_and_dtypes
 
 # path of this file, relative to parent folder of project/repo
 REL_PATH = "../.."
@@ -20,14 +20,15 @@ def download_geo_documentation(rel_path):
     print("Retrieving Geo Documentation")
     path = f"https://www2.census.gov/programs-surveys/acs/summary_file/{YEAR}/table-based-SF/documentation/{GEO_FILE_STUB}.txt"
     geo_df = pd.read_csv(path, sep="|", dtype="str")
-    geo_df.to_csv(f"{rel_path}/{GEO_FILE_PATH_NO_EXT}", index=False)
+    # save with data-types, since we use this as-is later (no consideration for string vs number)
+    save_csv_and_dtypes(geo_df, GEO_FILE_PATH_NO_EXT, rel_path)
 
 
 def _simple_get_csv(rel_path, uri, save_path, name):
     print(f"Retrieving {name}")
     df = pd.read_csv(uri, dtype="str")
     full_save_path = f"{rel_path}/{save_path}"
-    # os.makedirs(os.path.dirname(full_save_path), exist_ok=True)
+    # OK to simply use `to_csv`, since we load/use these datasets in a datatype-conscious manner
     df.to_csv(f"{full_save_path}", index=False)
 
 

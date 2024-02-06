@@ -31,8 +31,7 @@ def main(rel_path, zip_source):
             f"{rel_path}/{BG_ZIP_RAW_PATH}",
             dtype={'county': 'object', 'tract': 'object', 'blockgroup': 'object'},
             skiprows=[1],
-            encoding="ISO-8859-1" # otherwise get error:
-            # UnicodeDecodeError: 'utf-8' codec can't decode byte 0xf1 in position 113110: invalid continuation byte
+            encoding="ISO-8859-1" # otherwise get error: UnicodeDecodeError: 'utf-8' codec can't decode byte 0xf1 in position 113110: invalid continuation byte
         )
 
         # extract bg_fips

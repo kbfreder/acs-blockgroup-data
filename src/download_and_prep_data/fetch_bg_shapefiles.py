@@ -9,11 +9,10 @@ from tqdm import tqdm
 
 sys.path.append("..")
 from configs import STATE_FIPS_PATH, STATE_SHAPEFILES_OUT_DIR, STATE_FOLDER
-from process_bg_tables.util import load_checkpoint_df
+from process_bg_tables.util import load_csv_with_dtypes
 
 # path of this file, relative to parent folder of project/repo
 REL_PATH = "../.."
-# OUTDIR = "data/tigerweb/state_bg_shapefiles_2020/"
 OUT_DIR = os.path.join(STATE_SHAPEFILES_OUT_DIR, STATE_FOLDER)
 BASE_URL = "https://www2.census.gov/geo/tiger/TIGER2022/BG/tl_2022_{}_bg.zip"
 
@@ -54,8 +53,7 @@ def main(rel_path):
 
     print("Fetching blockgroup shapefiles")
     # load state list
-    # state_lkup_df = load_checkpoint_df(STATE_TABLE_NAME, rel_path=rel_path)
-    state_lkup_df = pd.read_csv(f"{rel_path}/{STATE_FIPS_PATH}")
+    state_lkup_df = load_csv_with_dtypes(STATE_FIPS_PATH, rel_path=rel_path)
     state_list = state_lkup_df['STATE']
 
     # iterate over states

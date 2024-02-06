@@ -12,7 +12,7 @@ from configs import (
     STATE_FIPS_PATH, STATE_SHAPEFILES_OUT_DIR, STATE_FOLDER,
     US_SHAPEFILE_PATH,
 )
-# from process_bg_tables.util import load_checkpoint_df
+from process_bg_tables.util import load_csv_with_dtypes
 
 # path of this file, relative to parent folder of project/repo
 REL_PATH = "../.."
@@ -24,13 +24,12 @@ REL_PATH = "../.."
 
 
 def main(rel_path):
-
+    print("Combining shapefiles")
     # out_path = f"{rel_path}/{OUT_DIR}"
     os.makedirs(f"{rel_path}/{US_SHAPEFILE_PATH}", exist_ok=True)
 
     # load state list
-    # state_lkup_df = load_checkpoint_df(STATE_TABLE_NAME, rel_path=rel_path)
-    state_lkup_df = pd.read_csv(f"{rel_path}/{STATE_FIPS_PATH}", dtype="str")
+    state_lkup_df = load_csv_with_dtypes(STATE_FIPS_PATH, rel_path=rel_path)
     state_list = state_lkup_df['STATE']
 
     print("Reading in state shapefiles...")
@@ -42,7 +41,6 @@ def main(rel_path):
 
     print("Combining & saving to disc")
     us_gdf = pd.concat(state_gdf_list, axis=0)
-    ## TODO: no longer need to nest this output?
     us_gdf.to_file(f"{rel_path}/{US_SHAPEFILE_PATH}")
 
     print("Deleting state shapefiles")

@@ -4,7 +4,7 @@ import pandas as pd
 from tqdm import tqdm
 
 sys.path.append("..")
-from process_bg_tables.util import save_csv_and_dtypes #load_checkpoint_df, save_checkpoint_df
+from process_bg_tables.util import load_csv_with_dtypes, save_csv_and_dtypes
 from configs import LAT_LON_PATH, STATE_FIPS_PATH
 
 
@@ -57,11 +57,9 @@ def fetch_process_all_lat_lon_data(state_list):
 
 def main(rel_path):
     print("Fetching lat/lon data")
-    # state_lkup_df = load_checkpoint_df(STATE_TABLE_NAME, rel_path)
-    state_lkup_df = pd.read_csv(f"{rel_path}/{STATE_FIPS_PATH}", dtype="str")
+    state_lkup_df = load_csv_with_dtypes(STATE_FIPS_PATH, rel_path)
     state_list = state_lkup_df['STUSAB']
     lat_lon_df = fetch_process_all_lat_lon_data(state_list)
-    # save_checkpoint_df(lat_lon_df, LAT_LON_FILENAME, rel_path)
     save_csv_and_dtypes(lat_lon_df, LAT_LON_PATH, rel_path)
 
 
