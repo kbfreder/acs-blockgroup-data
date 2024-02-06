@@ -5,3 +5,4 @@ openpyxl
 lxml
 tqdm # could remove this dependency (nice to have)
 geopandas # needed for spatial joins, which are optional 
+# html5lib

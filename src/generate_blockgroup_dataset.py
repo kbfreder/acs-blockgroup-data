@@ -17,9 +17,9 @@ from process_bg_tables.fips_names import generate_bg_fips_data
 
 from process_bg_tables.util import (
     extract_bg_fips_from_geo_id,
-    load_summary_df,
+    load_checkpoint_df,
     load_csv_with_dtypes,
-    save_summary_df,
+    save_checkpoint_df,
     save_csv_and_dtypes
 )
 from configs import (
@@ -30,7 +30,7 @@ from configs import (
     CT_CW_PATH,
     CT_MSA_CW_DICT,
     FINAL_OUTPUT_DIR,
-    LAT_LON_FILENAME,
+    LAT_LON_PATH,
     MSA_PATH, MSA_SHEET,
     MIL_GEO_IND_PATH,
     TRACT_ZIP_DEDUP_PATH,
@@ -96,7 +96,7 @@ def process_acs_bg_tables():
         df_list)
     acs_df = extract_bg_fips_from_geo_id(acs_df)
     print("Saving step 1 data")
-    save_summary_df(acs_df, "acs_data_step_1")
+    save_checkpoint_df(acs_df, "acs_data_step_1")
     return acs_df
 
 
@@ -195,7 +195,7 @@ if __name__ == "__main__":
         acs_df = process_acs_bg_tables()
     elif step == 1:
         print("Loading step 1 data")
-        acs_df = load_summary_df("acs_data_step_1")
+        acs_df = load_checkpoint_df("acs_data_step_1")
     
     
     # --------------------
@@ -207,11 +207,11 @@ if __name__ == "__main__":
     if step < 2:
         # "FIPS" data (derive bg, census tract, county FIPS)
         print("Generating FIPS data")
-        bg_geo_df = generate_bg_fips_data()
+        bg_geo_df = generate_bg_fips_data(REL_PATH)
 
         # lat/lon
         print("Fetching lat/lon data")
-        lat_lon_df = load_summary_df(LAT_LON_FILENAME)
+        lat_lon_df = load_checkpoint_df(LAT_LON_PATH, REL_PATH)
 
         # merge again
         print("Merging & saving")
@@ -219,10 +219,10 @@ if __name__ == "__main__":
         step_2_df = tmp_df1.merge(lat_lon_df, on='bg_fips')
 
         print("Saving step 2 data")
-        save_summary_df(step_2_df, "acs_data_step_2")
+        save_checkpoint_df(step_2_df, "acs_data_step_2")
     elif step == 2:
         print("Loading step 2 data")
-        step_2_df = load_summary_df("acs_data_step_2")
+        step_2_df = load_checkpoint_df("acs_data_step_2")
 
 
     # --------------------
@@ -331,10 +331,10 @@ if __name__ == "__main__":
         step_3_df = msa_merge_df.drop(columns=['county_fips_2020', 'ce_fips_2022'])
 
         print("Saving step 3 data")
-        save_summary_df(step_3_df, "acs_data_step_3")
+        save_checkpoint_df(step_3_df, "acs_data_step_3")
     elif step == 3:
         print("Loading step 3 data")
-        step_3_df = load_summary_df("acs_data_step_3")
+        step_3_df = load_checkpoint_df("acs_data_step_3")
 
 
     # --------------------
@@ -370,10 +370,10 @@ if __name__ == "__main__":
         step_4_df = bg_tract_df.drop(columns=step_4_drop_cols)
 
         print("Saving step 4 data")
-        save_summary_df(step_4_df, "acs_data_step_4")
+        save_checkpoint_df(step_4_df, "acs_data_step_4")
     elif step == 4:
         print("Loading step 4 data")
-        step_4_df = load_summary_df("acs_data_step_4")
+        step_4_df = load_checkpoint_df("acs_data_step_4")
     
 
     # --------------------

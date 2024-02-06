@@ -13,8 +13,8 @@ from process_bg_tables.misc_pop import get_all_misc_pop_data
 
 from process_bg_tables.util import (
     extract_bg_fips_from_geo_id,
-    load_summary_df,
-    save_summary_df
+    load_checkpoint_df,
+    save_checkpoint_df
 )
 from configs import (
     LAT_LON_FILENAME,

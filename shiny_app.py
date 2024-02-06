@@ -20,7 +20,7 @@ YEAR = 2022
 DATASET_YRS = 5
 ACS_BG_FILENAME = f"ACS_BG_DATA_{YEAR}"
 
-def load_summary_df(checkpoint_name):
+def load_checkpoint_df(checkpoint_name):
     file_stub = f"data/parsed_acs_data/{checkpoint_name}"
     with open(f"{file_stub}.pkl", "rb") as f:
         dtype_dict = pickle.load(f)
@@ -41,7 +41,7 @@ attrs = ["population", "pop_density_sqmile",
     ]
 DEFAULT_ATTR = 'population'
 ID_COL = 'bg_fips'
-df_2022 = load_summary_df(ACS_BG_FILENAME)
+df_2022 = load_checkpoint_df(ACS_BG_FILENAME)
 
 # 2019 data sample
 num_like_obj_cols = ['bg_fips', 'census_tract_fips', 'county_fips', 'zip']

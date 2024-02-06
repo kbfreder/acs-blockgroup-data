@@ -1,11 +1,12 @@
-import pickle
 
+import os
+import pickle
 import numpy as np
 import pandas as pd
 
 
 from configs import (
-    ACS_DATA_DIR, YEAR, DATASET_YRS, BG_DATA_PATH, BG_TABLE_KEY_COL
+    ACS_PARSED_DATA_DIR, YEAR, DATASET_YRS, ACS_SUMMARY_FILES_DIR, BG_TABLE_KEY_COL
 )
 
 
@@ -15,8 +16,20 @@ def get_column_names_df(tbl_id):
     return shell_df[shell_df['Table ID'] == tbl_id.upper()]
 
 
-def load_table(table_id, rel_path=".."):
-    file_path = f"{rel_path}/{BG_DATA_PATH}acsdt{DATASET_YRS}y{YEAR}-{table_id.lower()}.dat"
+def load_table(table_id, rel_path="..", sum_level='150'):
+    """Load ACS Summary File table (.csv)
+
+    params:
+    ---------
+    table_id (str):
+        Table ID. Ex: 'B07001'. 
+    rel_path (str):
+        Relative path from calling script to root of project.
+        Ex: ".."
+    sum_level (str):
+        ACS summary level to load data for. '150' = block group; '140' = tract.
+    """
+    file_path = f"{rel_path}/{ACS_SUMMARY_FILES_DIR}/sumlevel={sum_level}/acsdt{DATASET_YRS}y{YEAR}-{table_id.lower()}.dat"
     try:
         df = pd.read_csv(file_path, sep="|", dtype="str")
     except FileNotFoundError:
@@ -34,19 +47,20 @@ def load_csv_with_dtypes(path_without_ext, rel_path=".."):
 
 def save_csv_and_dtypes(df, path_without_ext, rel_path=".."):
     dtype_dict = df.dtypes.apply(lambda x: x.name).to_dict()
-    df.to_csv(f"{rel_path}/{path_without_ext}.csv", index=False)
-    with open(f"{rel_path}/{path_without_ext}.pkl", "wb") as pf:
+    save_path = f"{rel_path}/{path_without_ext}"
+    df.to_csv(f"{save_path}.csv", index=False)
+    with open(f"{save_path}.pkl", "wb") as pf:
         pickle.dump(dtype_dict, pf)
 
 
-# LOAD/SAVE SUMMARY TABLE
-def load_summary_df(checkpoint_name, rel_path=".."):
-    file_stub = f"{ACS_DATA_DIR}/{checkpoint_name}"
+# LOAD/SAVE CHECKPOINTS
+def load_checkpoint_df(checkpoint_name, rel_path=".."):
+    file_stub = f"{ACS_PARSED_DATA_DIR}/{checkpoint_name}"
     return load_csv_with_dtypes(file_stub, rel_path)
 
 
-def save_summary_df(summary_df, save_name, rel_path=".."):
-    file_stub = f"{ACS_DATA_DIR}/{save_name}"
+def save_checkpoint_df(summary_df, save_name, rel_path=".."):
+    file_stub = f"{ACS_PARSED_DATA_DIR}/{save_name}"
     save_csv_and_dtypes(summary_df, file_stub, rel_path)
 
 
