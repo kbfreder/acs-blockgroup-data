@@ -5,7 +5,7 @@ from tqdm import tqdm
 
 sys.path.append("..")
 from process_bg_tables.util import load_csv_with_dtypes, save_csv_and_dtypes
-from configs import LAT_LON_PATH, STATE_FIPS_PATH
+from configs import LAT_LON_PATH_NO_EXT, STATE_FIPS_PATH
 
 
 # path of this file, relative to parent folder of project/repo
@@ -60,7 +60,7 @@ def main(rel_path):
     state_lkup_df = load_csv_with_dtypes(STATE_FIPS_PATH, rel_path)
     state_list = state_lkup_df['STUSAB']
     lat_lon_df = fetch_process_all_lat_lon_data(state_list)
-    save_csv_and_dtypes(lat_lon_df, LAT_LON_PATH, rel_path)
+    save_csv_and_dtypes(lat_lon_df, LAT_LON_PATH_NO_EXT, rel_path)
 
 
 if __name__ == "__main__":

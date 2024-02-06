@@ -40,7 +40,7 @@ dataset_dict = {
     },
     "ct_cw": {
         "name": "CT Crosswalk",
-        "uri": "https://raw.githubusercontent.com/CT-Data-Collaborative/2022-tract-crosswalk/main/2022tractcrosswalk.csv",
+        "uri": "https://raw.githubusercontent.com/CT-Data-Collaborative/2022-block-crosswalk/main/2022blockcrosswalk.csv",
         "save_path": CT_CW_PATH
     },
 

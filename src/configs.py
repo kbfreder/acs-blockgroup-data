@@ -20,7 +20,8 @@ BG_TABLE_KEY_COL = 'GEO_ID'
 MANUAL_DOWNLOAD_DIR = "data/manual_download"
 AUTO_DOWNLOAD_DIR = "data/auto_download"
 PROCESSED_DIR = "data/processed"
-DATA_DIRS = [MANUAL_DOWNLOAD_DIR, AUTO_DOWNLOAD_DIR, PROCESSED_DIR]
+ACS_PARSED_DATA_DIR = f"{PROCESSED_DIR}/checkpoints"
+DATA_DIRS = [MANUAL_DOWNLOAD_DIR, AUTO_DOWNLOAD_DIR, PROCESSED_DIR, ACS_PARSED_DATA_DIR]
 
 ACS_SUMMARY_FILES_DIR = "data/auto_download" # 'sumlevel=xxx' gets added to this
 
@@ -28,7 +29,7 @@ GEO_FILE_STUB = f'Geos{YEAR}{DATASET_YRS}YR'
 GEO_FILE_PATH_NO_EXT = f"{AUTO_DOWNLOAD_DIR}/{GEO_FILE_STUB}"
 STATE_FIPS_PATH = f"{PROCESSED_DIR}/state_geo_lkup"
 
-LAT_LON_PATH = f"{PROCESSED_DIR}/lat-lon-area"
+LAT_LON_PATH_NO_EXT = f"{PROCESSED_DIR}/lat-lon-area"
 
 CPDB_PATH = f"{AUTO_DOWNLOAD_DIR}/pdb2022bg.csv"
 CT_CW_PATH = f"{AUTO_DOWNLOAD_DIR}/2022blockcrosswalk.csv"
@@ -42,7 +43,6 @@ BG_ZIP_DEDUP_PATH_NO_EXT = f"{PROCESSED_DIR}/bg_zip"
 MSA_PATH = f"{MANUAL_DOWNLOAD_DIR}/qcew-county-msa-csa-crosswalk.xlsx"
 MSA_SHEET = "Feb. 2013 Crosswalk"
 
-ACS_PARSED_DATA_DIR = f"{PROCESSED_DIR}/checkpoints"
 MIL_GEO_IND_PATH_NO_EXT = f"{PROCESSED_DIR}/mil_base_geo_join"
 
 # shapefiles

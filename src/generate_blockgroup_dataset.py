@@ -30,7 +30,7 @@ from configs import (
     CT_CW_PATH,
     CT_MSA_CW_DICT,
     FINAL_OUTPUT_DIR,
-    LAT_LON_PATH,
+    LAT_LON_PATH_NO_EXT,
     MSA_PATH, MSA_SHEET,
     MIL_GEO_IND_PATH_NO_EXT,
     TRACT_ZIP_DEDUP_PATH,
@@ -121,7 +121,7 @@ def get_ct_crosswalk():
     """Get data that cross-walks old FIPS to new FIPS for CT entities.
     """
     # Block-to-block crosswalk data downloaded from here: 
-    # https://github.com/CT-Data-Collaborative/2022-tract-crosswalk
+    # https://github.com/CT-Data-Collaborative/2022-block-crosswalk
     cw_df = pd.read_csv(f"{REL_PATH}/{CT_CW_PATH}", dtype="object")
 
     # need to 0-pad some numbers:
@@ -200,7 +200,7 @@ if __name__ == "__main__":
     
     # --------------------
     # 2. FIPS and LAT/LON 
-        ## See `base.py` for how FIPS data are derived.
+        ## See `fips_names.py` for how FIPS data are derived.
         ## Lat/Lon data is downloaded/compiled by a separate script (`fetch_lat_lon_data.py`)
         ## Here, we just load the output.
     # --------------------
@@ -211,7 +211,8 @@ if __name__ == "__main__":
 
         # lat/lon
         print("Fetching lat/lon data")
-        lat_lon_df = load_checkpoint_df(LAT_LON_PATH, REL_PATH)
+        # lat_lon_df = load_checkpoint_df(LAT_LON_PATH_NO_EXT, REL_PATH)
+        lat_lon_df = load_csv_with_dtypes(LAT_LON_PATH_NO_EXT, REL_PATH)
 
         # merge again
         print("Merging & saving")
@@ -249,7 +250,7 @@ if __name__ == "__main__":
     # --------------------
 
     # these must be defined outside of if/else 
-    area_col = 'LAND_AREA' # alt: 'area_sqmile'
+    area_col = 'LAND_AREA' # from (?) / alt: 'area_sqmile' from ?
     median_age_col = 'median_age' # from ACS data / alt: 'Median_Age_ACS_16_20' from CPDB
     
     # whether to use Census Planning DB for the source of the non-institutionalized population
@@ -286,14 +287,14 @@ if __name__ == "__main__":
         # ZIP
         # ----------------
         print("Loading & merging Zip data")
+        # zip crosswalk data has already been pre-processed
+        # (see `src/download_and_prep_data/process_zip_data.py`)
         if ZIP_SOURCE == 'tract':
             tract_zip_dedup = load_csv_with_dtypes(TRACT_ZIP_DEDUP_PATH, REL_PATH)
             zip_merge_df = pdb_attr_df.merge(
                 tract_zip_dedup, how='left', on='census_tract_fips')
         
         elif ZIP_SOURCE == 'blockgroup':
-            # this zip crosswalk data has already been pre-processed
-            # (see `src/download_and_prep_data/process_zip_data.py`)
             bg_zip_dedup_df = load_csv_with_dtypes(BG_ZIP_DEDUP_PATH_NO_EXT, REL_PATH)
             zip_merge_df = pdb_attr_df.merge(
                 bg_zip_dedup_df, on='bg_fips', how='left')
@@ -305,15 +306,11 @@ if __name__ == "__main__":
         # MSA data
         # --------------------
         print("Loading & merging MSA data")
+        # manual download, so read in straight
         msa_df = pd.read_excel(f"{REL_PATH}/{MSA_PATH}", sheet_name=MSA_SHEET,
                                dtype={'County Code': 'object'})
         msa_df['county_fips'] = msa_df['County Code'].apply(lambda x: str(x).zfill(5))
         
-
-        # The crosswalk between old & new CT counties/county equivalents is not a 1:1
-        # relationship, so using it to merge ACS data & MSA crosswalk results in duplicates
-        # in CT entries. Use a hand-defined crosswalk instead (`configs.CT_MSA_CW_DICT`)
-
         # this will result in 100% nulls for CT (which we fill in below)
         msa_merge_df = zip_merge_df.merge(msa_df[['county_fips', 'MSA Code', 'MSA Title']], 
                                 on='county_fips',  how='left')
@@ -325,6 +322,9 @@ if __name__ == "__main__":
         ct_msa_title_code_dict = {d['MSA Title']: d['MSA Code'] for d in tmp_dict}
 
         # apply crosswalk/lookups to CT entries
+        ## Note: the crosswalk between old & new CT counties/county equivalents is not a 1:1
+        ## relationship, so using it to merge ACS data & MSA crosswalk results in duplicates
+        ## in CT entries. Use a hand-defined crosswalk instead (`configs.CT_MSA_CW_DICT`)
         msa_merge_df['MSA'] = np.where(msa_merge_df['state_fips'] == '09', msa_merge_df['county_name'].map(CT_MSA_CW_DICT), msa_merge_df['MSA'])
         msa_merge_df['msa_code'] = np.where(msa_merge_df['state_fips'] == '09', msa_merge_df['MSA'].map(ct_msa_title_code_dict), msa_merge_df['msa_code'])
 
@@ -341,7 +341,7 @@ if __name__ == "__main__":
     # 4. TRACT-LEVEL ATTRIBUTES
 
         ## These are derived from rollups from blockgroup-level data.
-        ## (Previously/alternatively, we could download tract-level data.)
+        ## (Previously/alternatively, we could derive from tract-level data.)
     # --------------------
     if step < 4:
         bg_tract_df = step_3_df.copy()
@@ -357,6 +357,7 @@ if __name__ == "__main__":
         bg_tract_df['pct_tract_military_employed'] = bg_tract_df['tract_military_employed'] / bg_tract_df['tract_pop']
 
         # TODO: decide whether to use this logic, or do a spatial join
+        ## for now, keep both
         bg_tract_df['military_base_flag'] = np.where(
             (bg_tract_df['pct_tract_military_employed'] > 0.1) 
             & (bg_tract_df['pct_non_inst_groupquarters_2020'] > 0.1),
@@ -366,7 +367,6 @@ if __name__ == "__main__":
                     'tract_pop', 'grp_quarters_pop', 'tract_grp_quarters',
                     'military_employed', 'tract_military_employed',
                     ]
-        # step_4_df = bg_tract_df.copy()
         step_4_df = bg_tract_df.drop(columns=step_4_drop_cols)
 
         print("Saving step 4 data")
