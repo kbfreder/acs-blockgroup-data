@@ -8,7 +8,6 @@ from tqdm import tqdm
 
 sys.path.append("..")
 from configs import (
-    PROCESSED_DIR,
     STATE_FIPS_PATH, STATE_SHAPEFILES_OUT_DIR, STATE_FOLDER,
     US_SHAPEFILE_PATH,
 )
@@ -16,16 +15,10 @@ from process_bg_tables.util import load_csv_with_dtypes
 
 # path of this file, relative to parent folder of project/repo
 REL_PATH = "../.."
-# OUTDIR = f"data/tigerweb"
-# OUT_DIR = PROCESSED_DIR
-# STATE_FOLDER = "state_bg_shapefiles_2020"
-## TODO: move this to config.py?
-# CONCAT_FOLDER = "us_bg_shapefiles_2020"
 
 
 def main(rel_path):
     print("Combining shapefiles")
-    # out_path = f"{rel_path}/{OUT_DIR}"
     os.makedirs(f"{rel_path}/{US_SHAPEFILE_PATH}", exist_ok=True)
 
     # load state list

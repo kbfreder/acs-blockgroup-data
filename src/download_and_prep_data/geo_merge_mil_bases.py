@@ -6,7 +6,7 @@ import numpy as np
 
 sys.path.append("..")
 from process_bg_tables.util import save_csv_and_dtypes
-from configs import MIL_GEO_IND_PATH, US_SHAPEFILE_PATH
+from configs import MIL_GEO_IND_PATH_NO_EXT, US_SHAPEFILE_PATH
 
 
 # path of this file, relative to parent folder of project/repo
@@ -56,7 +56,7 @@ def main(rel_path, save_file=True):
     if save_file:
         print("Saving data")
         save_csv_and_dtypes(mil_base_ind_df,
-                            MIL_GEO_IND_PATH,
+                            MIL_GEO_IND_PATH_NO_EXT,
                             rel_path)
     else:
         mil_base_ind_df

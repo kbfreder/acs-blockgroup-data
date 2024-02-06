@@ -37,13 +37,13 @@ CT_CW_PATH = f"{AUTO_DOWNLOAD_DIR}/2022blockcrosswalk.csv"
 TRACT_ZIP_PATH = f"{MANUAL_DOWNLOAD_DIR}/TRACT_ZIP_092023.xlsx"
 TRACT_ZIP_DEDUP_PATH = f"{PROCESSED_DIR}/tract_zip.csv"
 BG_ZIP_RAW_PATH = f"{MANUAL_DOWNLOAD_DIR}/geocorr2022.csv"
-BG_ZIP_DEDUP_PATH = f"{PROCESSED_DIR}/bg_zip.csv"
+BG_ZIP_DEDUP_PATH_NO_EXT = f"{PROCESSED_DIR}/bg_zip"
 
 MSA_PATH = f"{MANUAL_DOWNLOAD_DIR}/qcew-county-msa-csa-crosswalk.xlsx"
 MSA_SHEET = "Feb. 2013 Crosswalk"
 
 ACS_PARSED_DATA_DIR = f"{PROCESSED_DIR}/checkpoints"
-MIL_GEO_IND_PATH = f"{PROCESSED_DIR}/mil_base_geo_join.csv"
+MIL_GEO_IND_PATH_NO_EXT = f"{PROCESSED_DIR}/mil_base_geo_join"
 
 # shapefiles
 STATE_SHAPEFILES_OUT_DIR = f"{AUTO_DOWNLOAD_DIR}/tigerweb"

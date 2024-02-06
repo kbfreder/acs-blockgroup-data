@@ -10,7 +10,7 @@ import os
 
 from process_bg_tables.fips_names import generate_state_fips_data
 from download_and_prep_data import (
-    combine_bg_shapefiles, 
+    combine_bg_shapefiles,
     fetch_bg_shapefiles,
     fetch_acs_summary_files,
     fetch_lat_lon_data,

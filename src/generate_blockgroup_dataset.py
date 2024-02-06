@@ -25,14 +25,14 @@ from process_bg_tables.util import (
 from configs import (
     ACS_BG_FILENAME, 
     BG_TABLE_KEY_COL,
-    BG_ZIP_DEDUP_PATH,
+    BG_ZIP_DEDUP_PATH_NO_EXT,
     CPDB_PATH, 
     CT_CW_PATH,
     CT_MSA_CW_DICT,
     FINAL_OUTPUT_DIR,
     LAT_LON_PATH,
     MSA_PATH, MSA_SHEET,
-    MIL_GEO_IND_PATH,
+    MIL_GEO_IND_PATH_NO_EXT,
     TRACT_ZIP_DEDUP_PATH,
     ZIP_SOURCE
 )
@@ -294,7 +294,7 @@ if __name__ == "__main__":
         elif ZIP_SOURCE == 'blockgroup':
             # this zip crosswalk data has already been pre-processed
             # (see `src/download_and_prep_data/process_zip_data.py`)
-            bg_zip_dedup_df = load_csv_with_dtypes(BG_ZIP_DEDUP_PATH, REL_PATH)
+            bg_zip_dedup_df = load_csv_with_dtypes(BG_ZIP_DEDUP_PATH_NO_EXT, REL_PATH)
             zip_merge_df = pdb_attr_df.merge(
                 bg_zip_dedup_df, on='bg_fips', how='left')
 
@@ -383,7 +383,7 @@ if __name__ == "__main__":
     # --------------------
     if step < 5:
         print("Merging in Military Base Geo indiciators")
-        mil_geo_df = load_csv_with_dtypes(MIL_GEO_IND_PATH, REL_PATH)
+        mil_geo_df = load_csv_with_dtypes(MIL_GEO_IND_PATH_NO_EXT, REL_PATH)
 
         msa_merge_df = step_4_df.merge(mil_geo_df, how='left',
                                    left_on='bg_fips', right_on='GEOID'
