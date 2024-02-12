@@ -14,28 +14,41 @@ BG_TABLE_KEY_COL = 'GEO_ID'
 # ======================
 # FILENAMES
     ## these could be anything, but need to be consistent across files
+    ## paths should be relative to where main python scripts are located (probably `src/`)
 # ======================
 
-# this should be relative to where `main.py` is located
-BG_DATA_PATH = "data/sumlevel=150/"
+MANUAL_DOWNLOAD_DIR = "data/manual_download"
+AUTO_DOWNLOAD_DIR = "data/auto_download"
+PROCESSED_DIR = "data/processed"
+ACS_PARSED_DATA_DIR = f"{PROCESSED_DIR}/checkpoints"
+DATA_DIRS = [MANUAL_DOWNLOAD_DIR, AUTO_DOWNLOAD_DIR, PROCESSED_DIR, ACS_PARSED_DATA_DIR]
 
-STATE_TABLE_NAME = "state_geo_lkup"
+ACS_SUMMARY_FILES_DIR = "data/auto_download" # 'sumlevel=xxx' gets added to this
+
 GEO_FILE_STUB = f'Geos{YEAR}{DATASET_YRS}YR'
-GEO_FILE_PATH_NO_EXT = f"data/parsed_acs_data/{GEO_FILE_STUB}"
-LAT_LON_FILENAME = "lat-lon-area"
-CPDB_PATH = "data/pdb2022bg.csv"
-CT_CW_PATH = "data/2022blockcrosswalk.csv"
+GEO_FILE_PATH_NO_EXT = f"{AUTO_DOWNLOAD_DIR}/{GEO_FILE_STUB}"
+STATE_FIPS_PATH = f"{PROCESSED_DIR}/state_geo_lkup"
+
+LAT_LON_PATH_NO_EXT = f"{PROCESSED_DIR}/lat-lon-area"
+
+CPDB_PATH = f"{AUTO_DOWNLOAD_DIR}/pdb2022bg.csv"
+CT_CW_PATH = f"{AUTO_DOWNLOAD_DIR}/2022blockcrosswalk.csv"
 
 # zip codes
-TRACT_ZIP_PATH = "data/TRACT_ZIP_092023.xlsx"
-TRACT_ZIP_DEDUP_PATH = "data/tract_zip.csv"
-BG_ZIP_RAW_PATH = "data/geocorr2022_all-states.csv"
-BG_ZIP_DEDUP_PATH = "data/bg_zip.csv"
+TRACT_ZIP_PATH = f"{MANUAL_DOWNLOAD_DIR}/TRACT_ZIP_092023.xlsx"
+TRACT_ZIP_DEDUP_PATH = f"{PROCESSED_DIR}/tract_zip.csv"
+BG_ZIP_RAW_PATH = f"{MANUAL_DOWNLOAD_DIR}/geocorr2022.csv"
+BG_ZIP_DEDUP_PATH_NO_EXT = f"{PROCESSED_DIR}/bg_zip"
 
-MSA_PATH = "data/qcew-county-msa-csa-crosswalk.xlsx"
+MSA_PATH = f"{MANUAL_DOWNLOAD_DIR}/qcew-county-msa-csa-crosswalk.xlsx"
 MSA_SHEET = "Feb. 2013 Crosswalk"
-ACS_DATA_DIR = "data/parsed_acs_data"
-MIL_GEO_IND_PATH = "data/mil_base_geo_join.csv"
+
+MIL_GEO_IND_PATH_NO_EXT = f"{PROCESSED_DIR}/mil_base_geo_join"
+
+# shapefiles
+STATE_SHAPEFILES_OUT_DIR = f"{AUTO_DOWNLOAD_DIR}/tigerweb"
+STATE_FOLDER = "state_bg_shapefiles_2020"
+US_SHAPEFILE_PATH = f"{PROCESSED_DIR}/us_bg_shapefiles_2020"
 
 # the final data
 FINAL_OUTPUT_DIR = "/"

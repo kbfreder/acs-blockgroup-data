@@ -1,19 +1,21 @@
-import pandas as pd
+import os
+import sys
 from ftplib import FTP
-import os, sys
+
+import pandas as pd
 from tqdm import tqdm
 
 sys.path.append("..")
-from configs import YEAR, DATASET_YRS
+from configs import ACS_SUMMARY_FILES_DIR, DATASET_YRS, YEAR
 
 REL_PATH = "../.."
-OUTDIR = "data"
+# OUTDIR = "data"
 
 # get tables for a summary level and output file for each
 def fetch_table_at_sum_level(tbl_id, year, dataset, sum_level, rel_path):
 
     # create output directory. 
-    outdir = f"{rel_path}/{OUTDIR}/sumlevel={sum_level}"
+    outdir = f"{rel_path}/{ACS_SUMMARY_FILES_DIR}/sumlevel={sum_level}"
     os.makedirs(outdir, exist_ok=True)
 
     ftp_dir =f"/programs-surveys/acs/summary_file/{year}/table-based-SF/data/{dataset}YRData/"

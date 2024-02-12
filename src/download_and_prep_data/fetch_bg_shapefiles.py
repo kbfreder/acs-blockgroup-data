@@ -1,16 +1,19 @@
-import os, sys
-from urllib.request import urlretrieve
-from urllib.error import HTTPError
+import os
+import sys
 import zipfile
+import pandas as pd
+from urllib.error import HTTPError
+from urllib.request import urlretrieve
+
 from tqdm import tqdm
 
 sys.path.append("..")
-from process_bg_tables.util import load_summary_df
-from configs import STATE_TABLE_NAME
+from configs import STATE_FIPS_PATH, STATE_SHAPEFILES_OUT_DIR, STATE_FOLDER
+from process_bg_tables.util import load_csv_with_dtypes
 
 # path of this file, relative to parent folder of project/repo
 REL_PATH = "../.."
-OUTDIR = "data/tigerweb/state_bg_shapefiles_2020/"
+OUT_DIR = os.path.join(STATE_SHAPEFILES_OUT_DIR, STATE_FOLDER)
 BASE_URL = "https://www2.census.gov/geo/tiger/TIGER2022/BG/tl_2022_{}_bg.zip"
 
 
@@ -28,7 +31,7 @@ def _extract_zip_file(zip_file, destination):
 
 def fetch_and_extract(state_code, rel_path):
     state_url = BASE_URL.format(state_code)
-    state_path = f"{rel_path}/{OUTDIR}{state_code}"
+    state_path = f"{rel_path}/{OUT_DIR}/{state_code}"
     state_zip = f"{state_path}.zip"
 
     # retrieve file
@@ -46,11 +49,11 @@ def fetch_and_extract(state_code, rel_path):
 
 
 def main(rel_path):
-    os.makedirs(f"{rel_path}/{OUTDIR}", exist_ok=True)
+    os.makedirs(f"{rel_path}/{OUT_DIR}", exist_ok=True)
 
     print("Fetching blockgroup shapefiles")
     # load state list
-    state_lkup_df = load_summary_df(STATE_TABLE_NAME, rel_path=rel_path)
+    state_lkup_df = load_csv_with_dtypes(STATE_FIPS_PATH, rel_path=rel_path)
     state_list = state_lkup_df['STATE']
 
     # iterate over states

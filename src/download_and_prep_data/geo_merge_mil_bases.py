@@ -6,13 +6,14 @@ import numpy as np
 
 sys.path.append("..")
 from process_bg_tables.util import save_csv_and_dtypes
-from configs import MIL_GEO_IND_PATH
+from configs import MIL_GEO_IND_PATH_NO_EXT, US_SHAPEFILE_PATH
 
 
 # path of this file, relative to parent folder of project/repo
 REL_PATH = "../.."
 # column name assigned to indicator field
 MIL_BASE_IND_COL = "military_base_flag_geo"
+
 
 def fetch_military_geo_data():
     page_list = pd.read_html("https://tigerweb.geo.census.gov/tigerwebmain/Files/acs23/tigerweb_acs23_military_us.html")
@@ -24,16 +25,17 @@ def fetch_military_geo_data():
     )
     return mil_gdf
 
-def main(save_file=True):
+
+def main(rel_path, save_file=True):
     print("Fetching military base lat/lon data")
     mil_gdf = fetch_military_geo_data()
     
     print("Loading US blockgroup shapefile data")
-    bg_shapefile_path = f"{REL_PATH}/data/tigerweb/us_bg_shapefiles_2020/us/"
+    bg_shapefile_path = f"{rel_path}/{US_SHAPEFILE_PATH}"
     if os.path.exists(bg_shapefile_path):
         us_gdf = gpd.read_file(bg_shapefile_path)
     else:
-        print("Please run generate US blockgroup shapefile.")
+        print("Please generate US blockgroup shapefile.")
     
     print("Perforing spatial join")
     merge_df = us_gdf.sjoin(mil_gdf, how="left", predicate="contains")
@@ -48,18 +50,17 @@ def main(save_file=True):
 
     mil_base_ind_df = mil_base_ind_df.drop(columns=['num_bases'])
 
-    print("Final lookup data:")
-    print(mil_base_ind_df.sample(10))
+    # print("Final lookup data:")
+    # print(mil_base_ind_df.sample(10))
 
     if save_file:
         print("Saving data")
         save_csv_and_dtypes(mil_base_ind_df,
-                            MIL_GEO_IND_PATH,
-                            REL_PATH)
+                            MIL_GEO_IND_PATH_NO_EXT,
+                            rel_path)
     else:
         mil_base_ind_df
 
 
 if __name__ == "__main__":
-    # main()
-    print("imports OK")
+    main(rel_path=REL_PATH)

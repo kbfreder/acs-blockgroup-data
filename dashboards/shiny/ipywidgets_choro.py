@@ -37,7 +37,7 @@ YEAR = 2022
 DATASET_YRS = 5
 ACS_BG_FILENAME = f"ACS_BG_DATA_{YEAR}"
 
-def load_summary_df(checkpoint_name):
+def load_checkpoint_df(checkpoint_name):
     file_stub = f"data/parsed_acs_data/{checkpoint_name}"
     with open(f"{file_stub}.pkl", "rb") as f:
         dtype_dict = pickle.load(f)
@@ -45,7 +45,7 @@ def load_summary_df(checkpoint_name):
     return summary_df
 
 
-acs_df = load_summary_df(ACS_BG_FILENAME)
+acs_df = load_checkpoint_df(ACS_BG_FILENAME)
 # filter on Wisconsin, for now
 acs_df = acs_df[acs_df['STATE'] == '55']
 

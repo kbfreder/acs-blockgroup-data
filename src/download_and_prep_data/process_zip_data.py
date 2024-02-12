@@ -3,7 +3,7 @@ import pandas as pd
 
 sys.path.append("..")
 from process_bg_tables.util import save_csv_and_dtypes
-from configs import (BG_ZIP_RAW_PATH, BG_ZIP_DEDUP_PATH, 
+from configs import (BG_ZIP_RAW_PATH, BG_ZIP_DEDUP_PATH_NO_EXT, 
                      TRACT_ZIP_PATH,
                      TRACT_ZIP_DEDUP_PATH,
                      ZIP_SOURCE
@@ -16,6 +16,7 @@ REL_PATH = "../.."
 def main(rel_path, zip_source):
     if zip_source == 'tract':
         print("Preparing tract-zip crosswalk data")
+        # this file is a manual download, so it has no datatype .pkl file
         tract_zip_df = pd.read_excel(f"{REL_PATH}/{TRACT_ZIP_PATH}", 
                                     dtype={'TRACT': 'object', 'ZIP': 'object'})
         # assign zip with largest pop % to tract
@@ -27,12 +28,13 @@ def main(rel_path, zip_source):
 
     elif zip_source == 'blockgroup':
         print("Preparing blockgroup-zip crosswalk data")
+        # this file is a manual download, so it has no datatype .pkl file
         alt_cw_df = pd.read_csv(
             f"{rel_path}/{BG_ZIP_RAW_PATH}",
+            # other columns will correctly be inferred as numeric datatypes
             dtype={'county': 'object', 'tract': 'object', 'blockgroup': 'object'},
             skiprows=[1],
-            encoding="ISO-8859-1" # otherwise get error:
-            # UnicodeDecodeError: 'utf-8' codec can't decode byte 0xf1 in position 113110: invalid continuation byte
+            encoding="ISO-8859-1" # otherwise get error: UnicodeDecodeError: 'utf-8' codec can't decode byte 0xf1 in position 113110: invalid continuation byte
         )
 
         # extract bg_fips
@@ -46,7 +48,7 @@ def main(rel_path, zip_source):
         bg_zip_df = alt_cw_single_zip[['bg_fips', 'zcta']].rename(
             columns={'zcta': 'zip'}
         )
-        save_csv_and_dtypes(bg_zip_df, BG_ZIP_DEDUP_PATH, rel_path)
+        save_csv_and_dtypes(bg_zip_df, BG_ZIP_DEDUP_PATH_NO_EXT, rel_path)
 
 
 if __name__ == "__main__":
