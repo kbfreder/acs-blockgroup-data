@@ -4,13 +4,13 @@ import numpy as np
 import pandas as pd
 
 from configs import (
-    ACS_PARSED_DATA_DIR, YEAR, DATASET_YRS, ACS_SUMMARY_FILES_DIR, BG_TABLE_KEY_COL
+    ACS_PARSED_DATA_DIR, YEAR, DATASET_YRS, ACS_SUMMARY_FILES_DIR, BG_TABLE_KEY_COL,
+    SHELL_DF_PATH
 )
 
 
-def get_column_names_df(tbl_id):
-    shell_ftp_dir = "https://www2.census.gov/programs-surveys/acs/summary_file/2022/table-based-SF/documentation/ACS20225YR_Table_Shells.txt"
-    shell_df = pd.read_csv(shell_ftp_dir, sep="|", )
+def get_column_names_df(tbl_id, rel_path=".."):
+    shell_df = pd.read_csv(f"{rel_path}/{SHELL_DF_PATH}")
     return shell_df[shell_df['Table ID'] == tbl_id.upper()]
 
 

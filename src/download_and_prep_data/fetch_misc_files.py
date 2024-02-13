@@ -9,6 +9,7 @@ from configs import (
     CT_CW_PATH,
     GEO_FILE_PATH_NO_EXT, 
     GEO_FILE_STUB,
+    SHELL_DF_PATH,
     YEAR
 )
 from process_bg_tables.util import save_csv_and_dtypes
@@ -24,9 +25,13 @@ def download_geo_documentation(rel_path):
     save_csv_and_dtypes(geo_df, GEO_FILE_PATH_NO_EXT, rel_path)
 
 
-def _simple_get_csv(rel_path, uri, save_path, name):
+def _simple_get_csv(rel_path, uri, save_path, name, sep=","):
     print(f"Retrieving {name}")
-    df = pd.read_csv(uri, dtype="str")
+    # if sep is None:
+    #     df = pd.read_csv(uri, dtype="str")
+    # else:
+    df = pd.read_csv(uri, dtype="str", sep=sep)
+
     full_save_path = f"{rel_path}/{save_path}"
     # OK to simply use `to_csv`, since we load/use these datasets in a datatype-conscious manner
     df.to_csv(f"{full_save_path}", index=False)
@@ -41,8 +46,14 @@ dataset_dict = {
     "ct_cw": {
         "name": "CT Crosswalk",
         "uri": "https://raw.githubusercontent.com/CT-Data-Collaborative/2022-block-crosswalk/main/2022blockcrosswalk.csv",
-        "save_path": CT_CW_PATH
+        "save_path": CT_CW_PATH,
     },
+    "shells": {
+        "name": "Table Shells",
+        "uri": "https://www2.census.gov/programs-surveys/acs/summary_file/2022/table-based-SF/documentation/ACS20225YR_Table_Shells.txt",
+        "save_path": SHELL_DF_PATH,
+        "sep": "|"
+    }
 
 }
 
