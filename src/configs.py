@@ -33,6 +33,7 @@ LAT_LON_PATH_NO_EXT = f"{PROCESSED_DIR}/lat-lon-area"
 
 CPDB_PATH = f"{AUTO_DOWNLOAD_DIR}/pdb2022bg.csv"
 CT_CW_PATH = f"{AUTO_DOWNLOAD_DIR}/2022blockcrosswalk.csv"
+SHELL_DF_PATH = f"{AUTO_DOWNLOAD_DIR}/table_shells.csv"
 
 # zip codes
 TRACT_ZIP_PATH = f"{MANUAL_DOWNLOAD_DIR}/TRACT_ZIP_092023.xlsx"
