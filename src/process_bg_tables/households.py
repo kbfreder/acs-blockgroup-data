@@ -30,7 +30,7 @@ def get_total_num_households():
 
 
 def get_pct_internet():
-    tbl_id = 'B28002' # 'Presence and Types of Internet Subscriptions in Household
+    tbl_id = 'B28002' # Presence and Types of Internet Subscriptions in Household
     col_idxs = [1, 2] # Total, With an Internet subscription
     col_names = ['total', 'with_internet']
     bg_df = process_some_cols_bg_table(tbl_id, col_idxs, col_names, 'int')

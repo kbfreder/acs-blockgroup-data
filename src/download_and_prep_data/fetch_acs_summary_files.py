@@ -71,25 +71,25 @@ def main(rel_path):
 
     ## option 2: download from a list
     for tbl_id in [
-        'B01001',
-        'B01002',
-        'B01003',
-        'B02001', 
-        'B03003', 
-        'B09019', 
-        'B11012',
-        'B12001', 
-        'B14007', 
-        'B15003', 
-        'B19001', 
-        'B19013', 
-        'B19058', 
-        'B23025', 
-        'B25003', 
-        'B25044', 
-        'B25046', 
-        'B27010',
-        'B28002', 
+        # Name of table [Universe (if not obvious from table name)]
+        'B01001', # Sex by Age [Total Population]
+        'B01002', # Median Age by Sex [Total Population]
+        'B01003', # Total Population
+        'B02001', # Race [Total population]
+        'B03003', # Hispanic or Latino [Total population]
+        'B09019', # Household Type (Including Living Alone) by Relationship [Total Population]
+        'B11012', # Households by Type [Households]
+        'B12001', # Sex by Marital Status for the Population 15 Years and Over
+        'B14007', # School Enrollment by Detailed Level of School for the Population 3 Years and Over
+        'B15003', # Educational Attainment for the Population 25 Years and Over
+        'B19001', # Household Income in the Past 12 Months (in 2022 Inflation-Adjusted Dollars) [Households]
+        'B19013', # Median Household Income in the Past 12 Months (in 2022 Inflation-Adjusted Dollars) [Households]
+        'B19058', # Public Assistance Income or Food Stamps/SNAP in the Past 12 Months for Households [Households]
+        'B23025', # Employment Status for the Population 16 Years and Over
+        'B25003', # Tenure [Occupied Housing Units]
+        'B25044', # Tenure by Vehicles Available [Occupied Housing Units]
+        'B27010', # <any table from:> [Civilian noninstitutionalized population]
+        'B28002', # Presence and Types of Internet Subscriptions in Household [Households]
     ]:
         fetch_table_at_sum_level(
             tbl_id=tbl_id,
