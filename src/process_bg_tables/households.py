@@ -9,6 +9,7 @@ We group them here for simplicity in `main.py`
 """
 
 from functools import reduce
+import re
 
 from .util import (
     get_column_names_df,
@@ -84,17 +85,55 @@ def get_pct_home_ownership():
     return bg_df[[BG_TABLE_KEY_COL, 'pct_home_ownership']]
 
 
+def _format_income_col(col):
+    """Formats income columns
+    
+    Ex:
+    - 'Less than $10,000 total' --> 'up_to_10k'
+    - '$35,000 to $39,999 total' --> '35k_to_40k'
+    - '$200,000 or more total' --> '200k_and_above'
+    """
+    dollar_matches = re.findall(r'\$\d{2,3},\d{3}', col)
+    dollar_numbers = [re.match(r'\$(\d{2,3}),', dollar).group().strip('$').strip(',') 
+                        for dollar in dollar_matches]
+    if len(dollar_matches) == 1:
+        if 'less' in col.lower():
+            new_col = f"up_to_{dollar_numbers[0]}k"
+        elif 'more' in col.lower():
+            new_col = f"{dollar_numbers[0]}k_and_above"
+    elif len(dollar_matches) == 2:
+        new_col = f"{dollar_numbers[0]}k_to_{int(dollar_numbers[1])+1}k"
+    else:
+        new_col = col
+
+    return new_col
+
+
+def get_hh_income():
+    tbl_id = 'B19001' # Household Income in the Past 12 Months
+    col_names_df = get_column_names_df(tbl_id)
+    data_df = process_all_cols_bg_table(tbl_id, col_names_df, 'int') 
+    new_data_cols = [_format_income_col(col) for col in data_df.columns]
+    data_df.columns = new_data_cols
+    pct_cols = []
+    for col in new_data_cols[2:]:
+        pct_col = f'pct_hh_income_{col}'
+        data_df[pct_col] = data_df[col] / data_df['Total']
+        pct_cols.append(pct_col)
+
+    return data_df[[BG_TABLE_KEY_COL] + pct_cols]
+
+
 # META FUNCTION
 def get_all_household_data():
-    df_list = []
-    for func in [
+    df_list = [func() for func in [
         get_total_num_households,
         get_pct_internet,
         get_vehicle_data,
         get_pct_foodstamps,
-        get_pct_home_ownership
-    ]:
-        df_list.append(func())
+        get_pct_home_ownership,
+        get_hh_income
+    ]]
     
     # merge
     hh_df = reduce(

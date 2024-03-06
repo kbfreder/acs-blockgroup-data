@@ -9,11 +9,10 @@ sys.path.append("..")
 from configs import ACS_SUMMARY_FILES_DIR, DATASET_YRS, YEAR
 
 REL_PATH = "../.."
-# OUTDIR = "data"
 
-# get tables for a summary level and output file for each
+
 def fetch_table_at_sum_level(tbl_id, year, dataset, sum_level, rel_path):
-
+    """Retrieve table(s) for a given summary level and save locally."""
     # create output directory. 
     outdir = f"{rel_path}/{ACS_SUMMARY_FILES_DIR}/sumlevel={sum_level}"
     os.makedirs(outdir, exist_ok=True)
@@ -54,8 +53,7 @@ def fetch_table_at_sum_level(tbl_id, year, dataset, sum_level, rel_path):
 
 def main(rel_path):
     
-    # see: https://www.census.gov/programs-surveys/acs/geography-acs/geography-boundaries-by-year.html
-    # for summary level codes
+    # for summary level codes, see: https://www.census.gov/programs-surveys/acs/geography-acs/geography-boundaries-by-year.html
     ## '150' = blockgroup
     ## '140' = tract
     
@@ -83,6 +81,7 @@ def main(rel_path):
         'B12001', 
         'B14007', 
         'B15003', 
+        'B19001', 
         'B19013', 
         'B19058', 
         'B23025', 
