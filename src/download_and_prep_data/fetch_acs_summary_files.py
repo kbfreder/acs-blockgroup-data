@@ -24,11 +24,11 @@ class FetchSummaryLevel:
 
 
     def _fetch_and_save_file(self, filename):
-        file_uri = f"https://www2.census.gov{self.ftp_dir}{filename}x"
+        file_uri = f"https://www2.census.gov{self.ftp_dir}{filename}"
         try:
             df = pd.read_csv(file_uri, sep="|")
         except Exception as e:
-            print(f"Could not find {file_uri} ({e})")
+            print(f"Problem accessing: {file_uri} ({e})")
             return None
         
         df = df[ df['GEO_ID'].str.startswith(self.sum_level) ]
@@ -41,7 +41,7 @@ class FetchSummaryLevel:
 
 
     def fetch_single_table(self, tbl_id):
-        print(f"Attempting to download table {tbl_id}")
+        print(f"Downloading table {tbl_id}")
         file = f"acsdt{self.dataset}y{self.year}-{tbl_id.lower()}.dat"
         self._fetch_and_save_file(file)
     
@@ -79,7 +79,7 @@ def main(rel_path):
 
     ## option 2: download from a list
     for tbl_id in [
-        # Name of table [Universe (if not obvious from table name)]
+        # Name of table [Universe if not obvious from table name]
         'B01001', # Sex by Age [Total Population]
         'B01002', # Median Age by Sex [Total Population]
         'B01003', # Total Population
