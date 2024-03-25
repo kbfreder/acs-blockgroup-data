@@ -19,6 +19,8 @@ See Notes below, especially regarding the state of Connecticut (CT; FIPS code 09
 ## Data Sources
 Various forms of external data must be downloaded before the blockgroup dataset can be generated.
 
+Instructions for obtaining the external raw data are below. Alternatively, you can download it from [this location](https://cslpromise-my.sharepoint.com/:u:/r/personal/kendra_frederick_cslbehring_com/Documents/acs_data/data.zip?csf=1&web=1&e=0wEZo2) on OneDrive. Note: this excludes the shapefiles. They can be downloaded as well from One Drive [here](https://cslpromise-my.sharepoint.com/:u:/r/personal/kendra_frederick_cslbehring_com/Documents/acs_data/us_bg_shapefiles_2022.zip?csf=1&web=1&e=f3ze6B). You may need to request access to these folders.
+
 ### Automated downloads
 
 Some datasets have scripts to aid in their download. 
@@ -46,18 +48,21 @@ Other datasets must be manually downloaded. Save them to `data/manual_download`.
 |Dataset | URL | Config variable(s) | Notes |
 |--------|-----|--------------------|------------|
 |County-MSA crosswalk | https://www.bls.gov/cew/classifications/areas/qcew-county-msa-csa-crosswalk.xlsx | `MSA_PATH` and `MSA_SHEET` | |
-|Zip Crosswalk - Tract | https://www.huduser.gov/portal/datasets/usps_crosswalk.html | `TRACT_ZIP_PATH` | Site requires registration; select 'TRACT-ZIP' crosswalk type when downloading |
+|Zip Crosswalk - Tract | https://www.huduser.gov/portal/datasets/usps_crosswalk.html | `TRACT_ZIP_PATH` | Site requires registration; Crosswalk type: 'TRACT-ZIP'; Data Year & Quarter: anything 2023 Q1 or later |
 |Zip Crosswalk - BG | https://mcdc.missouri.edu/applications/geocorr2022.html | `BG_ZIP_RAW_PATH` | See below for download instructions |
 
 
-- Blockgroup-Zip crosswalk download instructions
+- Zip Crosswalk - BG download instructions
     - Options to select:
-        - Select all states
+        - Select all states (CTRL + A)
         - Source geo = Census block group
         - Target geo = ZIP/ZCTA
         - Weighting variable = Population (default)
-    - Filename will be: `geocorr2022_[YYYYMMDDHHMM].csv` (where `_[YYYYMMDDHHMM]` corresponds to the datetime of the download)
-        - Rename the downloaded file: remove the `_[YYYYMMDDHHMM]` after `geocorr2022` and before `.csv`
+        - Output Options: Generate a data file; Format: CSV
+        - Click 'Run request'
+    - New page will load showing processing progress. Scroll down to see link to output file.
+    - Filename will be: `geocorr2022_xxxxxxxxxx.csv`
+        - Rename the downloaded file: remove the `_xxxxxxxxxx` (the string of numbers after `geocorr2022` and before `.csv`)
 
 
 
