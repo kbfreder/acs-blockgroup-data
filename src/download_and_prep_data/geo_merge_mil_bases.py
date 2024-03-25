@@ -21,7 +21,7 @@ def fetch_military_geo_data():
 
     mil_gdf = gpd.GeoDataFrame(
         mil_base_df, geometry=gpd.points_from_xy(mil_base_df['CENTLON'], mil_base_df['CENTLAT']), 
-        crs = "EPSG:4269" # this is the CRS of other shapefiles from TigerWeb
+        crs = "EPSG:4269" # this is a guess, but it's the CRS of other shapefiles from TigerWeb
     )
     return mil_gdf
 
@@ -49,9 +49,6 @@ def main(rel_path, save_file=True):
     mil_base_ind_df[MIL_BASE_IND_COL] = np.where(mil_base_ind_df['num_bases'] > 0, 1, 0)
 
     mil_base_ind_df = mil_base_ind_df.drop(columns=['num_bases'])
-
-    # print("Final lookup data:")
-    # print(mil_base_ind_df.sample(10))
 
     if save_file:
         print("Saving data")

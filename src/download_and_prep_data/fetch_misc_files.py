@@ -27,9 +27,6 @@ def download_geo_documentation(rel_path):
 
 def _simple_get_csv(rel_path, uri, save_path, name, sep=","):
     print(f"Retrieving {name}")
-    # if sep is None:
-    #     df = pd.read_csv(uri, dtype="str")
-    # else:
     df = pd.read_csv(uri, dtype="str", sep=sep)
 
     full_save_path = f"{rel_path}/{save_path}"

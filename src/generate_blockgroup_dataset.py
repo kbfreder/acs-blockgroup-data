@@ -121,10 +121,8 @@ def load_planning_db():
 
 
 def get_ct_crosswalk():
-    """Get data that cross-walks old FIPS to new FIPS for CT entities.
+    """Load and process data that cross-walks old FIPS to new FIPS for CT entities.
     """
-    # Block-to-block crosswalk data downloaded from here: 
-    # https://github.com/CT-Data-Collaborative/2022-block-crosswalk
     cw_df = pd.read_csv(f"{REL_PATH}/{CT_CW_PATH}", dtype="object")
 
     # need to 0-pad some numbers:
