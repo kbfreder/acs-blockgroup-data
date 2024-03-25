@@ -82,8 +82,26 @@ CT_MSA_CW_DICT = { # ce_name_2022 --> MSA Title
 ## 'table' = total value provided by table
 DENOM_TO_USE = 'total'
 
-# which source to use (ACS vs planning data base (pdb))
-## defined in `main.py` instead
+# which source to use 
+## ACS: blockgroup community survey data
+## PDB = Census planning data base 
+## TW = TigerWeb (Lat/Lon data)
+_median_age_src = 'ACS' # options = ACS, PDB
+NON_INST_POP_SRC = 'ACS' # options = ACS, PDB
+_area_src = 'PDB' # options = TW, PDB
+
+_median_age_src_col_name_dict = {
+    'ACS': 'median_age',
+    'PDB': 'Median_Age_ACS_16_20'
+}
+_area_src_col_name_dict = {
+    'PDB': 'LAND_AREA',
+    'TW': 'area_sqmile'
+}
+
+MEDIAN_AGE_COL = _median_age_src_col_name_dict[_median_age_src]
+AREA_COL = _area_src_col_name_dict[_area_src]
+
 
 # which ZIP code crosswalk to use
 ZIP_CHOICES = ['tract', 'blockgroup']

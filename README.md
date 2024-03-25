@@ -1,21 +1,22 @@
 
 # ACS blockgroup data processing
 
-Process data from the Census 2022 American Community Survey (ACS) at the blockgroup level.
+Process data from the Census 2022 American Community Survey (ACS) at the blockgroup (BG) level.
 
-## Processing data
+## TL;DR
+1. Download data that can be automated. Frome the `src` folder run: `python prep_all_data.py`
+2. Manually download remaining data. See section below.
+3. Process the data. From the `src` folder run: `python generate_blockgroup_dataset.py`
+4. Final data can be found at:
+    a. ACD BG: `./ACS_BG_DATA_2022.csv`
+        - there is an accompanying .pkl file that defines the datatypes. See `Processing data` below.
+    b. Shapefile: `./data/processed/us_bg_shapefiles_2022`
 
-Once all necessary data has been downloaded (see following section), it can be processed using `src/generate_blockgroup_dataset.py`
-- Run: `cd src`, then `python generate_blockgroup_dataset.py`
-- If only a certain portion of the processing needs to be re-run, you can pass a `--from-step` argument.
-- Final Output is saved to `ACS_BG_DATA_2022.csv`
-    - A helper dictionary containing the data types for the columns is also created: `ACS_BG_DATA_2022.pkl`. 
-      (csv's don't do a great job of retaining datatypes, and some 0-padded strings tend to get interpreted as integers.)
-    - The helper function `src/process_bg_tables/util/load_csv_with_dtypes` can be used to load the .csv with the correct datatypes. (ex: `load_csv_with_dtypes('ACS_BG_DATA_2022')`)
+See Notes below, especially regarding the state of Connecticut (CT; FIPS code 09)
 
 
 ## Downloading data
-External data must be downloaded prior to processing.
+Various forms of external data must be downloaded prior to processing.
 
 
 ### Automated / scripts
@@ -28,15 +29,15 @@ Datasets & their scripts:
 
 - `fetch_lat_lon_data.py`
     - Downloads latitude+longitude data for blockgroups from TigerWeb. This dataset also include area.
-    - Requires that state lookup file exists. See below
+    - Requires that state lookup file exists. See below.
 
 - Optional: `fetch_bg_shapefiles.py`
-    - Download shapefiles for blockgroups. (Loops over all the states, then combines into a single dataset.)
-    - Should be followed up by running `combine_bg_shapefiles.py`
+    - Downloads shapefiles for blockgroups. (Loops over all the states)
+    - Should be followed up by running `combine_bg_shapefiles.py`, which then combines the state shapefiles into a single nationwide dataset.
         - requires state lookup file
 
 - `process_zip_data.py`
-    - Deduplicates blockgroup-to-zip crosswalk data and extract blockgroup FIPS.
+    - Deduplicates blockgroup-to-zip crosswalk data and extracts blockgroup FIPS.
 
 - `fetch_misc_files.py`
     - Blockgroup "Geo" Documentation
@@ -50,7 +51,7 @@ Datasets & their scripts:
  
 
 ### Manual:
-These datasets must be downloaded manually. Save them to `data/manual_download`. (Folder should be created by `prep_all_data` script.) Update the respective variables in `config.py` as needed, which hold the filenames.
+These datasets must be downloaded manually. Save them to `data/manual_download`. (This folder is created by `prep_all_data` script.) Update the respective variables in `config.py` as needed, which hold the filenames.
 
 - County-MSA crosswalk:
     - Download from: https://www.bls.gov/cew/classifications/areas/qcew-county-msa-csa-crosswalk.xlsx
@@ -75,16 +76,48 @@ These datasets must be downloaded manually. Save them to `data/manual_download`.
     - Set `ZIP_SOURCE` in `configs.py` to indicate which option to use
 
 
+## Processing data
+
+Once all necessary data has been downloaded (see following section), it can be processed using `src/generate_blockgroup_dataset.py`
+- Run: `cd src`, then `python generate_blockgroup_dataset.py`
+- If only a certain portion of the processing needs to be re-run, you can pass a `--from-step` argument.
+- Final Output is saved to `ACS_BG_DATA_2022.csv`
+    - A helper dictionary containing the data types for the columns is also created: `ACS_BG_DATA_2022.pkl`. 
+      (csv's don't do a great job of retaining datatypes, and some 0-padded strings tend to get interpreted as integers.)
+    - The helper function `src/process_bg_tables/util/load_csv_with_dtypes` can be used to load the .csv with the correct datatypes. (ex: `load_csv_with_dtypes('ACS_BG_DATA_2022')`)
+
 
 
 ## Notes:
 - Connecticut (state CT, state code 09):
     - Connecticut changed from counties to "Planning Regions", and with it, the FIPS (INCITS) codes changed: https://www.federalregister.gov/documents/2022/06/06/2022-12063/change-to-county-equivalents-in-the-state-of-connecticut
     - The Census implemented these changes in 2022.
-        - The 2022 ACS data has the new FIPS numbers/designations, 
+        - The 2022 ACS data has the new FIPS numbers/designations.
         - The 2020 Planning Database does not. 
-    - We must therefore leverage a cross-walk to join the two datasets for the state of CT
+    - We must therefore leverage a cross-walk to join the two datasets for the state of CT. This is defined by hand -- see `CT_MSA_CW_DICT` in `/src/configs.py`. It's not perfect, but this only impacts data derived from the Planning Database:
+        - population density (possibly)
+        - median age (possibly)
+        - `pct_inst_groupquarters`
+        - `pct_non_inst_groupquarters`
+        - `non_institutionized_pop` (possibly)
+        - `amindian_aknative_hawaiiannative_land_flag`
 
+- Choice of source for certain fields
+    - Some data is available from multiple sources, so we must choose. (They are often very similar, but there can be slight differences.) The source used for the first three are defined in `src/configs.py`.
+
+    - Median age: ACS or Census Planning Database
+
+    - Area: TigerWeb Lat/Lon data for each blockgroup or Census Planning Database
+
+    - Non-instituionalized population: ACS or Census Planning Database
+
+    - Military base flag/indicator
+        - In the processing for 2019, logic was used to derive this indicator.
+            - This logic is retained; See step 4 in `src/generate_blockgroup_dataset.py`
+            - The output is stored in the field `military_base_flag`
+        - We can also do a spatial join between the lat/lon of military bases and the nationwide shapefile
+            - This is performed in `src/download_and_prep_data/geo_merge_mil_bases.py`
+            - This output is stored in the field `mil_base_ind`
 
 - Jam Values
     - Per: https://www.census.gov/content/dam/Census/library/publications/2023/acs/acs_table_based_summary_file_handbook.pdf:
