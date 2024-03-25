@@ -48,8 +48,8 @@ MIL_GEO_IND_PATH_NO_EXT = f"{PROCESSED_DIR}/mil_base_geo_join"
 
 # shapefiles
 STATE_SHAPEFILES_OUT_DIR = f"{AUTO_DOWNLOAD_DIR}/tigerweb"
-STATE_FOLDER = "state_bg_shapefiles_2020"
-US_SHAPEFILE_PATH = f"{PROCESSED_DIR}/us_bg_shapefiles_2020"
+STATE_FOLDER = f"state_bg_shapefiles_{YEAR}"
+US_SHAPEFILE_PATH = f"{PROCESSED_DIR}/us_bg_shapefiles_{YEAR}"
 
 # the final data
 FINAL_OUTPUT_DIR = "/"
