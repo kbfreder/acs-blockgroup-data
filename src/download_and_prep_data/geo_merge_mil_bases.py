@@ -1,4 +1,5 @@
-import os, sys
+import os
+import sys
 
 import pandas as pd
 import geopandas as gpd
@@ -36,6 +37,7 @@ def main(rel_path, save_file=True):
         us_gdf = gpd.read_file(bg_shapefile_path)
     else:
         print("Please generate US blockgroup shapefile.")
+        sys.exit(1)
     
     print("Perforing spatial join")
     merge_df = us_gdf.sjoin(mil_gdf, how="left", predicate="contains")

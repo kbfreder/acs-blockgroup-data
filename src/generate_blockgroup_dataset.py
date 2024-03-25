@@ -22,6 +22,7 @@ from process_bg_tables.util import (
     save_checkpoint_df,
     save_csv_and_dtypes
 )
+from download_and_prep_data import process_zip_data
 from configs import (
     ACS_BG_FILENAME, 
     AREA_COL,
@@ -284,8 +285,11 @@ if __name__ == "__main__":
         # ZIP
         # ----------------
         print("Loading & merging Zip data")
-        # zip crosswalk data has already been pre-processed
-        # (see `src/download_and_prep_data/process_zip_data.py`)
+        
+        # first, prepare zip data
+        process_zip_data.main(REL_PATH, ZIP_SOURCE)
+        
+        # then we can merge it to ACS data
         if ZIP_SOURCE == 'tract':
             tract_zip_dedup = load_csv_with_dtypes(TRACT_ZIP_DEDUP_PATH, REL_PATH)
             zip_merge_df = pdb_attr_df.merge(
