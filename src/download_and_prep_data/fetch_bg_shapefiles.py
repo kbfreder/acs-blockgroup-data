@@ -1,20 +1,19 @@
 import os
 import sys
 import zipfile
-import pandas as pd
 from urllib.error import HTTPError
 from urllib.request import urlretrieve
 
 from tqdm import tqdm
 
 sys.path.append("..")
-from configs import STATE_FIPS_PATH, STATE_SHAPEFILES_OUT_DIR, STATE_FOLDER
+from configs import STATE_FIPS_PATH, STATE_SHAPEFILES_OUT_DIR, STATE_FOLDER, YEAR
 from process_bg_tables.util import load_csv_with_dtypes
 
 # path of this file, relative to parent folder of project/repo
 REL_PATH = "../.."
 OUT_DIR = os.path.join(STATE_SHAPEFILES_OUT_DIR, STATE_FOLDER)
-BASE_URL = "https://www2.census.gov/geo/tiger/TIGER2022/BG/tl_2022_{}_bg.zip"
+BASE_URL = "https://www2.census.gov/geo/tiger/TIGER{}/BG/tl_{}_{}_bg.zip"
 
 
 def _extract_zip_file(zip_file, destination):
@@ -30,7 +29,7 @@ def _extract_zip_file(zip_file, destination):
     
 
 def fetch_and_extract(state_code, rel_path):
-    state_url = BASE_URL.format(state_code)
+    state_url = BASE_URL.format(YEAR, YEAR, state_code)
     state_path = f"{rel_path}/{OUT_DIR}/{state_code}"
     state_zip = f"{state_path}.zip"
 

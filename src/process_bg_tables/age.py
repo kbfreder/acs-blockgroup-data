@@ -35,7 +35,7 @@ def generate_age_prop_data():
     Generage `prop_age_X_to_Y` columns.
     Also creates `prop_female` column
     """
-    tbl_id = 'B01001'
+    tbl_id = 'B01001' # Sex by Age
     col_names_df = get_column_names_df(tbl_id)
     bg_df = process_all_cols_bg_table(tbl_id, col_names_df, 'int')
     bg_df['prop_female'] = bg_df['Female total'] / bg_df['Total'] 

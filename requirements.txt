@@ -3,6 +3,6 @@ pandas
 numpy
 openpyxl
 lxml
-tqdm # could remove this dependency (nice to have)
+tqdm 
 geopandas # needed for spatial joins, which are optional 
 # html5lib

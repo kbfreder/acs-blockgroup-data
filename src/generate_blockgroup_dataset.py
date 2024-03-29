@@ -22,8 +22,10 @@ from process_bg_tables.util import (
     save_checkpoint_df,
     save_csv_and_dtypes
 )
+from download_and_prep_data import process_zip_data
 from configs import (
     ACS_BG_FILENAME, 
+    AREA_COL,
     BG_TABLE_KEY_COL,
     BG_ZIP_DEDUP_PATH_NO_EXT,
     CPDB_PATH, 
@@ -31,8 +33,10 @@ from configs import (
     CT_MSA_CW_DICT,
     FINAL_OUTPUT_DIR,
     LAT_LON_PATH_NO_EXT,
-    MSA_PATH, MSA_SHEET,
+    MEDIAN_AGE_COL,
     MIL_GEO_IND_PATH_NO_EXT,
+    MSA_PATH, MSA_SHEET,
+    NON_INST_POP_SRC,
     TRACT_ZIP_DEDUP_PATH,
     ZIP_SOURCE
 )
@@ -118,10 +122,8 @@ def load_planning_db():
 
 
 def get_ct_crosswalk():
-    """Get data that cross-walks old FIPS to new FIPS for CT entities.
+    """Load and process data that cross-walks old FIPS to new FIPS for CT entities.
     """
-    # Block-to-block crosswalk data downloaded from here: 
-    # https://github.com/CT-Data-Collaborative/2022-block-crosswalk
     cw_df = pd.read_csv(f"{REL_PATH}/{CT_CW_PATH}", dtype="object")
 
     # need to 0-pad some numbers:
@@ -158,6 +160,7 @@ def derive_planning_db_attrs(pdb_df: pd.DataFrame,
 
     pdb_df['pct_inst_groupquarters_2020'] = pdb_df['Inst_GQ_CEN_2020'] / pdb_df['Tot_Population_CEN_2020']
     pdb_df['pct_non_inst_groupquarters_2020'] = pdb_df['Non_Inst_GQ_CEN_2020'] / pdb_df['Tot_Population_CEN_2020']
+    
     if use_cpdb_for_non_inst_pop:
         pdb_df['non_institutionized_pop'] = round(
             pdb_df['population'] * (1-pdb_df['pct_inst_groupquarters_2020']), 0)
@@ -211,7 +214,6 @@ if __name__ == "__main__":
 
         # lat/lon
         print("Fetching lat/lon data")
-        # lat_lon_df = load_checkpoint_df(LAT_LON_PATH_NO_EXT, REL_PATH)
         lat_lon_df = load_csv_with_dtypes(LAT_LON_PATH_NO_EXT, REL_PATH)
 
         # merge again
@@ -249,13 +251,6 @@ if __name__ == "__main__":
         
     # --------------------
 
-    # these must be defined outside of if/else 
-    area_col = 'LAND_AREA' # from (?) / alt: 'area_sqmile' from ?
-    median_age_col = 'median_age' # from ACS data / alt: 'Median_Age_ACS_16_20' from CPDB
-    
-    # whether to use Census Planning DB for the source of the non-institutionalized population
-    # if False, use ACS data as source
-    use_cpdb_for_non_inst_pop = False
 
     if step < 3:
         # CENSUS PLANNING DB
@@ -281,14 +276,20 @@ if __name__ == "__main__":
 
         # derive attributes
         pdb_attr_df = derive_planning_db_attrs(
-            pdb_merge_df, area_col, median_age_col, use_cpdb_for_non_inst_pop)
+            pdb_df=pdb_merge_df, 
+            area_col=AREA_COL, 
+            median_age_col=MEDIAN_AGE_COL, 
+            use_cpdb_for_non_inst_pop=(NON_INST_POP_SRC == 'PDB'))
 
 
         # ZIP
         # ----------------
         print("Loading & merging Zip data")
-        # zip crosswalk data has already been pre-processed
-        # (see `src/download_and_prep_data/process_zip_data.py`)
+        
+        # first, prepare zip data
+        process_zip_data.main(REL_PATH, ZIP_SOURCE)
+        
+        # then we can merge it to ACS data
         if ZIP_SOURCE == 'tract':
             tract_zip_dedup = load_csv_with_dtypes(TRACT_ZIP_DEDUP_PATH, REL_PATH)
             zip_merge_df = pdb_attr_df.merge(
@@ -348,7 +349,7 @@ if __name__ == "__main__":
 
         print("Deriving Tract-level data")
         bg_tract_df['tract_pop'] = bg_tract_df.groupby("census_tract_fips")['population'].transform("sum")
-        bg_tract_df['tract_pop_density_sqmile'] = bg_tract_df['tract_pop'] / bg_tract_df[area_col]
+        bg_tract_df['tract_pop_density_sqmile'] = bg_tract_df['tract_pop'] / bg_tract_df[AREA_COL]
 
         bg_tract_df['tract_grp_quarters'] = bg_tract_df.groupby("census_tract_fips")['grp_quarters_pop'].transform("sum")
         bg_tract_df['pct_tract_groupqtrs'] = bg_tract_df['tract_grp_quarters'] / bg_tract_df['tract_pop']
@@ -357,7 +358,9 @@ if __name__ == "__main__":
         bg_tract_df['pct_tract_military_employed'] = bg_tract_df['tract_military_employed'] / bg_tract_df['tract_pop']
 
         # TODO: decide whether to use this logic, or do a spatial join
-        ## for now, keep both
+        ## for now, keep both (spatial join is performed in `download_an_prep_data/geo_merge_mil_bases.py`)
+        ## column from logic = `military_base_flag`
+        ## column from spatial join = `mil_base_ind`
         bg_tract_df['military_base_flag'] = np.where(
             (bg_tract_df['pct_tract_military_employed'] > 0.1) 
             & (bg_tract_df['pct_non_inst_groupquarters_2020'] > 0.1),
