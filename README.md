@@ -72,10 +72,20 @@ Once all necessary data has been downloaded, it can be processed using `src/gene
 - Navigate to the `src` folder, then run `python generate_blockgroup_dataset.py`
     - If only a certain portion of the processing needs to be re-run, you can pass a `--from-step` argument.
 - Final Output is saved to `ACS_BG_DATA_2022.csv`
-    - A helper dictionary containing the data types for the columns is also created: `ACS_BG_DATA_2022.pkl`. 
-        - csv's don't do a great job of retaining datatypes; for example, some 0-padded strings tend to get interpreted as integers.
-    - The helper function `src/process_bg_tables/util/load_csv_with_dtypes` can be used to load the .csv with the correct datatypes. (ex: `load_csv_with_dtypes('ACS_BG_DATA_2022')`)
+    - csv's don't do a great job of retaining datatypes; for example, some 0-padded strings tend to get interpreted as integers.
+    - So, a helper file containing the data types for the columns is also created: `ACS_BG_DATA_2022_dtypes.csv`. 
+    - The helper function `src/process_bg_tables/util/load_final_data` can be used to load the .csv with the correct datatypes. (ex: `load_final_data(REL_PATH)`) where `REL_PATH` is the path relative to the root of the project (ex: `'.'`).
+    - Alternatively, the helper file can be used as follows to load the data file:
+    ```python
+    from csv import DictReader
+    import pandas as pd
 
+    with open("./ACS_BG_DATA_2022_dtypes.csv", "r") as f:
+        reader = DictReader(f)
+        dtype_dict = {row['column']: row['dtype'] for row in reader}
+    
+    df = pd.read_csv("./ACS_BG_DATA_2022.csv", dtype=dtype_dict)
+    ```
 
 
 ## Notes
