@@ -2,10 +2,17 @@
 import pickle
 import numpy as np
 import pandas as pd
+from csv import DictWriter, DictReader
 
 from configs import (
-    ACS_PARSED_DATA_DIR, YEAR, DATASET_YRS, ACS_SUMMARY_FILES_DIR, BG_TABLE_KEY_COL,
-    SHELL_DF_PATH
+    ACS_BG_FILENAME,
+    ACS_PARSED_DATA_DIR, 
+    ACS_SUMMARY_FILES_DIR, 
+    BG_TABLE_KEY_COL,
+    DATASET_YRS, 
+    FINAL_OUTPUT_DIR,
+    SHELL_DF_PATH,
+    YEAR, 
 )
 
 
@@ -36,19 +43,76 @@ def load_table(table_id, rel_path="..", sum_level='150'):
     return df
 
 
-def load_csv_with_dtypes(path_without_ext, rel_path=".."):
-    with open(f"{rel_path}/{path_without_ext}.pkl", "rb") as f:
-        dtype_dict = pickle.load(f)
-    df = pd.read_csv(f"{rel_path}/{path_without_ext}.csv", dtype=dtype_dict)
-    return df
+def load_csv_with_dtypes(path_without_ext, rel_path="..", dtype_file_type='.pkl'):
+    """Loads a csv using an associated file to define datatypes.
+
+    params:
+    -----------
+    path_without_ext (str): Filename including any child paths, without file
+        extension. Ex: "data/processed/checkpoints/checkpoint_1"
+    rel_path (str): Relative path to root of project.
+    dtype_file_type (str): Filetype of file that contains data type definitions. 
+        Acceptable values: '.pkl', '.csv'
+    
+    returns:
+    -----------
+    pd.DataFrame
+    """
+    if dtype_file_type =='.pkl':
+        with open(f"{rel_path}/{path_without_ext}_dtypes.pkl", "rb") as f:
+            dtype_dict = pickle.load(f)
+    elif dtype_file_type == '.csv':
+        with open(f"{rel_path}/{path_without_ext}_dtypes.csv", "r") as f:
+            reader = DictReader(f)
+            dtype_dict = {row['column']: row['dtype'] for row in reader}
+    else:
+        print(f"File type {dtype_file_type} for datatype file not recognized!")
+        print("Loading data without data type definitions")
+        return pd.read_csv(f"{rel_path}/{path_without_ext}.csv")
+
+    return pd.read_csv(f"{rel_path}/{path_without_ext}.csv", dtype=dtype_dict)
 
 
-def save_csv_and_dtypes(df, path_without_ext, rel_path=".."):
+def save_csv_and_dtypes(df, path_without_ext, rel_path="..", dtype_file_types=['.pkl']):
+    """Save dataframe as a .csv and corresponding file(s) that define(s) datatypes.
+
+    params:
+    -----------
+    df (pd.DataFrame): contains data to save
+    path_without_ext (str): Filename including any child paths, without file
+        extension. Ex: "data/processed/checkpoints/checkpoint_1"
+    rel_path (str): Relative path to root of project.
+    dtype_file_types (list[str]): List of filetypes to save data type 
+        information as. Acceptable values: '.pkl', '.csv'
+    """
     dtype_dict = df.dtypes.apply(lambda x: x.name).to_dict()
-    save_path = f"{rel_path}/{path_without_ext}"
-    df.to_csv(f"{save_path}.csv", index=False)
-    with open(f"{save_path}.pkl", "wb") as pf:
-        pickle.dump(dtype_dict, pf)
+    save_path_stub = f"{rel_path}/{path_without_ext}"
+    df.to_csv(f"{save_path_stub}.csv", index=False)
+
+    if '.pkl' in dtype_file_types:
+        with open(f"{save_path_stub}_dtypes.pkl", "wb") as pf:
+            pickle.dump(dtype_dict, pf)
+    
+    if '.csv' in dtype_file_types:
+        with open(f"{save_path_stub}_dtypes.csv", "w") as f:
+            w = DictWriter(f, ["column", "dtype"])
+            w.writeheader()
+            for key, val in dtype_dict.items():
+                w.writerow({'column': key, 'dtype': val})
+
+
+def save_final_data(df, rel_path):
+    save_csv_and_dtypes(
+        df=df, 
+        path_without_ext=f"{FINAL_OUTPUT_DIR}/{ACS_BG_FILENAME}", 
+        rel_path=rel_path,
+        dtype_file_types=['.pkl', '.csv']
+        )
+    # df.to_pickle(f"{FINAL_OUTPUT_DIR}/{ACS_BG_FILENAME}.pkl")
+
+
+def load_final_data(rel_path):
+    load_csv_with_dtypes(f"{FINAL_OUTPUT_DIR}/{ACS_BG_FILENAME}", rel_path)
 
 
 # LOAD/SAVE CHECKPOINTS

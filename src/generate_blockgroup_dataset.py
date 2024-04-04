@@ -20,7 +20,8 @@ from process_bg_tables.util import (
     load_checkpoint_df,
     load_csv_with_dtypes,
     save_checkpoint_df,
-    save_csv_and_dtypes
+    save_csv_and_dtypes,
+    save_final_data,
 )
 from download_and_prep_data import process_zip_data
 from configs import (
@@ -395,5 +396,6 @@ if __name__ == "__main__":
         final_df = msa_merge_df.drop(columns=['GEOID'])
 
         print("Saving Final data")
-        save_csv_and_dtypes(final_df, f"{FINAL_OUTPUT_DIR}/{ACS_BG_FILENAME}", REL_PATH)
+        # save_csv_and_dtypes(final_df, f"{FINAL_OUTPUT_DIR}/{ACS_BG_FILENAME}", REL_PATH)
+        save_final_data(final_df, REL_PATH)
         print("Done!")
