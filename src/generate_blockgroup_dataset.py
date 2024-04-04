@@ -25,14 +25,12 @@ from process_bg_tables.util import (
 )
 from download_and_prep_data import process_zip_data
 from configs import (
-    ACS_BG_FILENAME, 
     AREA_COL,
     BG_TABLE_KEY_COL,
     BG_ZIP_DEDUP_PATH_NO_EXT,
     CPDB_PATH, 
-    CT_CW_PATH,
+    CT_CW_PROC_PATH_NO_EXT,
     CT_MSA_CW_DICT,
-    FINAL_OUTPUT_DIR,
     LAT_LON_PATH_NO_EXT,
     MEDIAN_AGE_COL,
     MIL_GEO_IND_PATH_NO_EXT,
@@ -122,30 +120,30 @@ def load_planning_db():
     return pdb_df
 
 
-def get_ct_crosswalk():
-    """Load and process data that cross-walks old FIPS to new FIPS for CT entities.
-    """
-    cw_df = pd.read_csv(f"{REL_PATH}/{CT_CW_PATH}", dtype="object")
+# def get_ct_crosswalk():
+#     """Load and process data that cross-walks old FIPS to new FIPS for CT entities.
+#     """
+#     cw_df = pd.read_csv(f"{REL_PATH}/{CT_CW_PATH}", dtype="object")
 
-    # need to 0-pad some numbers:
-    pad_dict = {
-        'block_fips_2020': 15,
-        'block_fips_2022': 15,
-        'county_fips_2020': 5,
-        'ce_fips_2022': 5,
-        'zip5': 5
-    }
-    for col, pad in pad_dict.items():
-        cw_df[col] = cw_df[col].apply(lambda x: x.zfill(pad))
+#     # need to 0-pad some numbers:
+#     pad_dict = {
+#         'block_fips_2020': 15,
+#         'block_fips_2022': 15,
+#         'county_fips_2020': 5,
+#         'ce_fips_2022': 5,
+#         'zip5': 5
+#     }
+#     for col, pad in pad_dict.items():
+#         cw_df[col] = cw_df[col].apply(lambda x: x.zfill(pad))
         
-    # data is at block level; we want blockgroup
-    cw_df['bg_fips_2020'] = cw_df['block_fips_2020'].str[:-3]
-    cw_df['bg_fips_2022'] = cw_df['block_fips_2022'].str[:-3]
-    ## confirmed that there is only 1 zip or county per bg
-    cw_df_bg = cw_df[['bg_fips_2020', 'bg_fips_2022', 'zip5',
-                      'county_fips_2020', 'ce_fips_2022', ]].drop_duplicates()
+#     # data is at block level; we want blockgroup
+#     cw_df['bg_fips_2020'] = cw_df['block_fips_2020'].str[:-3]
+#     cw_df['bg_fips_2022'] = cw_df['block_fips_2022'].str[:-3]
+#     ## confirmed that there is only 1 zip or county per bg
+#     cw_df_bg = cw_df[['bg_fips_2020', 'bg_fips_2022', 'zip5',
+#                       'county_fips_2020', 'ce_fips_2022', ]].drop_duplicates()
 
-    return cw_df_bg
+#     return cw_df_bg
 
 
 def derive_planning_db_attrs(pdb_df: pd.DataFrame, 
@@ -260,8 +258,9 @@ if __name__ == "__main__":
         pdb_df = load_planning_db()
 
         ## This function returns old bg --> new bg crosswalk, plus zip and old & new county fips
-        ct_cw_df = get_ct_crosswalk()
-
+        # ct_cw_df = get_ct_crosswalk()
+        ct_cw_df = load_csv_with_dtypes(CT_CW_PROC_PATH_NO_EXT, REL_PATH)
+        
         # merge with Planning Database
         pdb_cw_df = pdb_df.merge(ct_cw_df, how='left',
                                  left_on='GIDBG', right_on='bg_fips_2020')
@@ -396,6 +395,5 @@ if __name__ == "__main__":
         final_df = msa_merge_df.drop(columns=['GEOID'])
 
         print("Saving Final data")
-        # save_csv_and_dtypes(final_df, f"{FINAL_OUTPUT_DIR}/{ACS_BG_FILENAME}", REL_PATH)
         save_final_data(final_df, REL_PATH)
         print("Done!")

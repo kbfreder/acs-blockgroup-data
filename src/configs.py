@@ -32,7 +32,9 @@ STATE_FIPS_PATH = f"{PROCESSED_DIR}/state_geo_lkup"
 LAT_LON_PATH_NO_EXT = f"{PROCESSED_DIR}/lat-lon-area"
 
 CPDB_PATH = f"{AUTO_DOWNLOAD_DIR}/pdb2022bg.csv"
-CT_CW_PATH = f"{AUTO_DOWNLOAD_DIR}/2022blockcrosswalk.csv"
+CT_CW_RAW_PATH = f"{AUTO_DOWNLOAD_DIR}/2022blockcrosswalk.csv"
+CT_CW_PROC_PATH_NO_EXT = f"{PROCESSED_DIR}/CT_blockgroup_crosswalk_2020-2022"
+
 SHELL_DF_PATH = f"{AUTO_DOWNLOAD_DIR}/table_shells.csv"
 
 # zip codes
