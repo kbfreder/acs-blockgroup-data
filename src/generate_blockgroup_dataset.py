@@ -25,14 +25,12 @@ from process_bg_tables.util import (
 )
 from download_and_prep_data import process_zip_data
 from configs import (
-    ACS_BG_FILENAME, 
     AREA_COL,
     BG_TABLE_KEY_COL,
     BG_ZIP_DEDUP_PATH_NO_EXT,
     CPDB_PATH, 
     CT_CW_PROC_PATH_NO_EXT,
     CT_MSA_CW_DICT,
-    FINAL_OUTPUT_DIR,
     LAT_LON_PATH_NO_EXT,
     MEDIAN_AGE_COL,
     MIL_GEO_IND_PATH_NO_EXT,
@@ -397,6 +395,5 @@ if __name__ == "__main__":
         final_df = msa_merge_df.drop(columns=['GEOID'])
 
         print("Saving Final data")
-        # save_csv_and_dtypes(final_df, f"{FINAL_OUTPUT_DIR}/{ACS_BG_FILENAME}", REL_PATH)
         save_final_data(final_df, REL_PATH)
         print("Done!")

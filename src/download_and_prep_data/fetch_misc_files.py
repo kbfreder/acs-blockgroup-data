@@ -1,6 +1,5 @@
 
 import sys
-# import os
 import pandas as pd
 
 sys.path.append("..")
@@ -19,22 +18,22 @@ from process_bg_tables.util import save_csv_and_dtypes
 REL_PATH = "../.."
 
 dataset_dict = {
-    # "cpdb": {
-    #     "name": "Census Planning Database",
-    #     "uri": "https://www2.census.gov/adrm/PDB/2022/pdb2022bg.csv",
-    #     "save_path": CPDB_PATH
-    # },
+    "cpdb": {
+        "name": "Census Planning Database",
+        "uri": "https://www2.census.gov/adrm/PDB/2022/pdb2022bg.csv",
+        "save_path": CPDB_PATH
+    },
     "ct_cw": {
         "name": "CT Crosswalk",
         "uri": "https://raw.githubusercontent.com/CT-Data-Collaborative/2022-block-crosswalk/main/2022blockcrosswalk.csv",
         "save_path": CT_CW_RAW_PATH,
     },
-    # "shells": {
-    #     "name": "Table Shells",
-    #     "uri": "https://www2.census.gov/programs-surveys/acs/summary_file/2022/table-based-SF/documentation/ACS20225YR_Table_Shells.txt",
-    #     "save_path": SHELL_DF_PATH,
-    #     "sep": "|"
-    # }
+    "shells": {
+        "name": "Table Shells",
+        "uri": "https://www2.census.gov/programs-surveys/acs/summary_file/2022/table-based-SF/documentation/ACS20225YR_Table_Shells.txt",
+        "save_path": SHELL_DF_PATH,
+        "sep": "|"
+    }
 }
 
 def download_geo_documentation(rel_path):
@@ -79,12 +78,11 @@ def prep_ct_crosswalk():
     cw_df_bg = cw_df[['bg_fips_2020', 'bg_fips_2022', 'zip5',
                       'county_fips_2020', 'ce_fips_2022', ]].drop_duplicates()
 
-    # return cw_df_bg
     save_csv_and_dtypes(cw_df_bg, CT_CW_PROC_PATH_NO_EXT, REL_PATH)
 
 
 def main(rel_path):
-    # download_geo_documentation(rel_path)
+    download_geo_documentation(rel_path)
     for dataset, ds_info in dataset_dict.items():
         _simple_get_csv(rel_path, **ds_info)
     prep_ct_crosswalk()
